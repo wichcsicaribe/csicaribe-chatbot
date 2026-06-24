@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -32,6 +32,7 @@ export default async function handler(req, res) {
     res.status(200).json({ reply });
 
   } catch(error) {
-    res.status(500).json({ reply: 'Error interno. Por favor intenta más tarde.' });
+    console.error('Error:', error);
+    res.status(500).json({ reply: 'Error: ' + error.message });
   }
 }
