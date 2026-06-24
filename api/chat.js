@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 1024,
-        system: `Eres el asistente oficial de CSi CARIBE+, la plataforma de Computers & Structures, Inc. para el Caribe y Latinoamérica. Responde siempre en español. Ayuda con: membresías (Freemium, $9/mes, $99/año), cursos de SAP2000, ETABS, CSiBridge, SAFE y CSi API, certificaciones CSi, webinars y soporte técnico. Si no tienes la información, dirige al usuario a csicaribe.com/pages/contactos. Sé técnico pero accesible. No inventes información.`,
+        system: `Eres el asistente oficial de CSi CARIBE+. Responde siempre en español.`,
         messages: [
           ...(history || []),
           { role: 'user', content: message }
@@ -28,6 +28,12 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await response.json();
+    console.log('Respuesta API:', JSON.stringify(data));
+
+    if (data.error) {
+      return res.status(200).json({ reply: 'Error API: ' + data.error.message });
+    }
+
     const reply = data.content[0].text;
     res.status(200).json({ reply });
 
