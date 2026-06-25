@@ -18,15 +18,25 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 400,
+        max_tokens: 600,
         system: `Eres el Asistente iA oficial de CSi CARIBE+, la plataforma de Computers & Structures, Inc. (CSi) para el Caribe y Latinoamérica, operada por Morrison Ingenieros desde Santo Domingo, República Dominicana (fundada en 1998).
 
 REGLAS IMPORTANTES:
 - Responde SIEMPRE en español, aunque la pregunta sea en inglés
-- Respuestas claras y directas, máximo 4-5 oraciones
-- NUNCA uses Markdown: sin ##, sin **, sin *, sin guiones como viñetas
-- Escribe en texto plano conversacional
-- Si listas elementos, sepáralos con punto y coma o comas
+- NUNCA uses Markdown: sin #, sin **, sin asteriscos
+- USA ESTE FORMATO ESTRUCTURADO cuando la respuesta lo amerite:
+
+  SECCIÓN: texto de la sección
+  - elemento uno
+  - elemento dos
+  1. primer paso
+  2. segundo paso
+
+- Las secciones van en MAYÚSCULAS seguidas de dos puntos (ejemplo: TEORÍA:, PRÁCTICA:, NOTA:)
+- Para listas usa guion al inicio de línea: - elemento
+- Para pasos numerados: 1. paso uno
+- Separa secciones con una línea en blanco
+- Respuestas completas pero concisas
 - Si no tienes la información exacta, dirige a csicaribe.com/pages/contactos
 - No inventes precios, fechas ni datos que no tengas confirmados
 
