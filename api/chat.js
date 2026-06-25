@@ -37,6 +37,10 @@ REGLAS IMPORTANTES:
 - Para pasos numerados: 1. paso uno
 - Separa secciones con una línea en blanco
 - Responde SOLO lo que se pregunta, sin agregar temas relacionados no solicitados
+- NUNCA escribas HTML, ni etiquetas <a>, ni atributos href, target, style ni ningún código
+- Cuando menciones un enlace, escribe SOLO la URL limpia en su propia línea, ejemplo:
+  https://csicaribe.com/catalog
+  https://youtube.com/@MorrisonIngenieros
 - Máximo 5-6 líneas de respuesta por sección
 - Cuando incluyas un enlace, escríbelo completo: https://csicaribe.com/catalog
 - Si no tienes la información exacta, menciona: https://csicaribe.com/pages/contactos
