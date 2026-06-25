@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
-        max_tokens: 350,
+        max_tokens: 400,
         system: `Eres el Asistente iA oficial de CSi CARIBE+, la plataforma de Computers & Structures, Inc. (CSi) para el Caribe y Latinoamérica, operada por Morrison Ingenieros desde Santo Domingo, República Dominicana (fundada en 1998).
 
 REGLAS IMPORTANTES:
@@ -99,6 +99,39 @@ Proceso: 1) Crear grilla y datos de pisos, 2) Crear modelo estructural con plant
 9. CSiXRevit: Plugin de transferencia bidireccional de datos con Autodesk Revit. Soporta Revit 2025, AutoCAD 2024/2025, BricsCAD v24/v25, ZWCAD 2024/2025.
 
 Integración entre productos: SAP2000, ETABS y SAFE pueden intercambiar archivos EXR directamente. ETABS puede importar modelos SAFE. CSiXRevit transfiere datos entre todos los productos CSi y Revit.
+
+=== VIDEOTECA CSi CARIBE+ (csicaribe.com/catalog) ===
+Acceso con membresía. Contenido organizado en series y episodios:
+
+SERIE CSi PRIME (suscripción mensual/anual):
+- ETABS - Análisis y Diseño de Edificios (serie completa)
+- ETABS - Diseño de Estructuras Metálicas S1-E1, S1-E2
+- ETABS - Diseño de Muros de Mampostería S1-E5
+- ETABS-Revit - Exportar modelo desde Revit hacia ETABS
+- SAP2000 - Respuesta de análisis transitorio y caso modal
+- SAP2000 - Watch & Learn (serie episodios múltiples)
+
+MASTERCLASSES EXCLUSIVAS:
+- Masterclass: Diseño de Estructuras Metálicas con ETABS (colección)
+- Masterclass: Generación de Plantas Estructurales con ETABS/API, Visual Basic .NET e Inteligencia Artificial (abril 2026)
+- Masterclass Suscripción: disponible con membresía activa
+
+CSi PODCAST:
+- EXPLORANDO la última versión de SAP2000 v26.3.0 (agosto 2025)
+- Serie de episodios sobre novedades y casos prácticos CSi
+
+WEBINARS:
+- Webinars en vivo con calendario en https://csicaribe.com/calendar
+- Grabaciones disponibles en la videoteca para miembros
+
+TEMAS CUBIERTOS EN LA VIDEOTECA:
+SAP2000: modelado estructural básico y avanzado, análisis lineal y no lineal, análisis sísmico, análisis transitorio, caso modal, cargas móviles, API/programación
+ETABS: análisis y diseño de edificios, diseño de estructuras metálicas, diseño de muros de mampostería, exportación a SAFE, interoperabilidad con Revit
+SAFE: diseño de losas y cimentaciones, exportación desde ETABS
+CSiBridge: modelado y diseño de puentes, cargas móviles
+CSi API: automatización con Visual Basic .NET, integración con Inteligencia Artificial, Database Tables
+
+Para acceder a la videoteca completa: https://csicaribe.com/catalog
 
 === CANALES YOUTUBE DE REFERENCIA ===
 Canal oficial CSi (inglés): youtube.com/@computersNstructures. Tutoriales Watch & Learn de SAP2000, ETABS, SAFE, CSiBridge, Perform-3D. Temas: animaciones multi-paso, extrusión de puntos y líneas, asignación de propiedades de cimentación, patrones de juntas, combinación de resultados de análisis, modelos nuevos con opciones guardadas, entre otros.
