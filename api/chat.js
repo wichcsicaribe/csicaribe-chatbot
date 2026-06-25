@@ -40,7 +40,7 @@ Web: https://csicaribe.com
 Videoteca: https://csicaribe.com/catalog
 Calendario: https://csicaribe.com/calendar
 Contacto: https://csicaribe.com/pages/contactos
-Tienda/licencias: https://csicaribe.com/pages/tienda
+Tienda/licencias: https://csicaribe.com/pages/planes
 Comunidad: https://csicaribe.com/community
 
 MEMBRESÍAS:
@@ -54,79 +54,79 @@ SECCIÓN: WEBINARS, PODCAST y SESIONES P&R
 Categoría: https://csicaribe.com/categories/category-7rttowhw8qg
 
 - WEBINAR Sistemas de Protección para Puentes (SPE-P) - 1h13m
-  https://csicaribe.com/programs/webinar-proteccion-puentes-6ac33e
+  https://csicaribe.com/programs/webinar-proteccion-puentes-6ac332
 - INDUCCIÓN Programación de Database Tables con la API de CSi - 1h23m - GRATIS
-  https://csicaribe.com/programs/induccion-database-tables-api-csi
+  https://csicaribe.com/programs/induccion-datatables-91af64
 - SWE en ETABS API + VB Framework 4.8 y .NET 8 - 50m
-  https://csicaribe.com/programs/swe-etabs-api-vb-framework
+  https://csicaribe.com/catalog
 - ANÁLISIS NO LINEAL DINÁMICO POR F.N.A. - 1h22m
-  https://csicaribe.com/programs/analisis-no-lineal-dinamico-fna
+  https://csicaribe.com/catalog
 - DISEÑO Y OPTIMIZACIÓN DE COLUMNAS CON DETAILING - 56m
-  https://csicaribe.com/programs/diseno-optimizacion-columnas-detailing
+  https://csicaribe.com/catalog
 - DISEÑO POR CAPACIDAD EN HORMIGÓN ARMADO ACI318-25 - 1h20m
-  https://csicaribe.com/programs/diseno-capacidad-hormigon-aci318-25
+  https://csicaribe.com/catalog
 - Audio PODCAST: Análisis de la Nueva Versión de SAFE v23.0.0 - 17m
-  https://csicaribe.com/programs/podcast-safe-v23
+  https://csicaribe.com/catalog
 - DISEÑO DE VIGAS EN ETABS SEGÚN NTE E.060 Plugin - 1h06m
-  https://csicaribe.com/programs/diseno-vigas-etabs-nte-e060-plugin
+  https://csicaribe.com/catalog
 - Etiquetado correcto de PIERS Y SPANDRELS en ETABS v22.7.0 - 6m
-  https://csicaribe.com/programs/etiquetado-piers-spandrels-etabs
+  https://csicaribe.com/catalog
 - DETAILING para ETABS & SAP2000 - 1h00m
-  https://csicaribe.com/programs/detailing-etabs-sap2000
+  https://csicaribe.com/catalog
 - ANÁLISIS DINÁMICO TIEMPO HISTORIA Integración Directa en ETABS - 1h27m
-  https://csicaribe.com/programs/analisis-dinamico-tiempo-historia-etabs
+  https://csicaribe.com/catalog
 - Prerrequisitos para el Diseño de Estructuras Metálicas - 1h14m
-  https://csicaribe.com/programs/prerrequisitos-diseno-estructuras-metalicas
+  https://csicaribe.com/catalog
 - Inestabilidad Estructural ¿CÓMO ABORDARLA? - 7m
-  https://csicaribe.com/programs/inestabilidad-estructural
+  https://csicaribe.com/catalog
 - API-ETABS aplicado en Visual Basic Advanced y Excel - 55m
-  https://csicaribe.com/programs/api-etabs-visual-basic-excel
+  https://csicaribe.com/catalog
 - EXPLORANDO la última versión de CSiBRIDGE v26.3.0 - 21m
-  https://csicaribe.com/programs/explorando-csibridge-v26
+  https://csicaribe.com/catalog
 - Pérdidas de Pre-Esfuerzo, Análisis Detallado por Elementos Finitos - 1h30m
-  https://csicaribe.com/programs/perdidas-pre-esfuerzo-elementos-finitos
+  https://csicaribe.com/catalog
 - Desarrollo de PLUGINS para Softwares de CSi - 1h09m
-  https://csicaribe.com/programs/desarrollo-plugins-softwares-csi
+  https://csicaribe.com/catalog
 - EXPLORANDO la última versión de ETABS v22.7.0 - 7m
-  https://csicaribe.com/programs/explorando-etabs-v22
+  https://csicaribe.com/catalog
 - EXPLORANDO la última versión de SAP2000 v26.3.0 - 8m
-  https://csicaribe.com/programs/podcast-sap2000-6e1a73
+  https://csicaribe.com/catalog
 - Estudio Estructural del BURJ KHALIFA con ETABS - 6m
-  https://csicaribe.com/programs/burj-khalifa-etabs
+  https://csicaribe.com/catalog
 - EXPLORANDO la última versión de SAFE v22.7.0 - 6m
-  https://csicaribe.com/programs/explorando-safe-v22
+  https://csicaribe.com/catalog
 
 SECCIÓN: ETABS - Análisis y Diseño de Edificios (Suscripción)
 Categoría: https://csicaribe.com/categories/category-dqbmc3ybftg
 
 - Curso Taller de Interoperabilidad ETABS con Revit (4 episodios)
-  https://csicaribe.com/programs/collection-etabs-revit
+  https://csicaribe.com/catalog
 - ETABS - Edificio de Cuatro Niveles - Geometría - 17m
-  https://csicaribe.com/programs/etabs-edificio-cuatro-niveles-geometria
+  https://csicaribe.com/catalog
 - ETABS - Estructuras de Bordes Curvos - 17m
-  https://csicaribe.com/programs/etabs-estructuras-bordes-curvos
+  https://csicaribe.com/catalog
 - ETABS - Peso Sísmico - 13m
-  https://csicaribe.com/programs/etabs-peso-sismico
+  https://csicaribe.com/catalog
 - ETABS - Insertion Point - 12m
-  https://csicaribe.com/programs/etabs-insertion-point
+  https://csicaribe.com/catalog
 - ETABS - Modelo Estadio - 13m
-  https://csicaribe.com/programs/etabs-modelo-estadio
+  https://csicaribe.com/catalog
 - ETABS - Modelo de Edificio de 10 Pisos - 15m
-  https://csicaribe.com/programs/etabs-modelo-edificio-10-pisos
+  https://csicaribe.com/catalog
 - ETABS - Viga No Prismática Parte 1 - 9m
-  https://csicaribe.com/programs/etabs-viga-no-prismatica-parte-1
+  https://csicaribe.com/catalog
 - ETABS - Viga No Prismática Parte 2 - 13m
-  https://csicaribe.com/programs/etabs-viga-no-prismatica-parte-2
+  https://csicaribe.com/catalog
 - ETABS - Estructura Metálica con Mezanine Parte 1 - 13m
   https://csicaribe.com/programs/etabs_diseno_acero_s1_e1-450603
 - ETABS - Estructura Metálica con Mezanine Parte 2 - 12m
   https://csicaribe.com/programs/etabs_diseno_acero_s1_e2-450603
 - ETABS - Estructura Metálica con Mezanine Parte 3 - 15m
-  https://csicaribe.com/programs/etabs-estructura-metalica-mezanine-parte-3
+  https://csicaribe.com/catalog
 - ETABS - Pórtico Plano Sometido a Cargas Gravitacionales - 17m
-  https://csicaribe.com/programs/etabs-portico-plano-cargas-gravitacionales
+  https://csicaribe.com/catalog
 - ETABS - Modelo de una Nave Industrial - Geometría - 16m
-  https://csicaribe.com/programs/etabs-nave-industrial-geometria
+  https://csicaribe.com/catalog
 - ETABS - Diseño de Muros de Mampostería S1-E5 - 17m
   https://csicaribe.com/programs/etabs-diseno-muros-s1-e5-bada78
 - ETABS-Revit - Exportar modelo desde Revit hacia ETABS
@@ -136,73 +136,73 @@ SECCIÓN: SAFE - Análisis y Diseño de Sistemas de Pisos (Suscripción)
 Categoría: https://csicaribe.com/categories/category-safe
 
 - SAFE - Determinación del Área de una Zapata Excéntrica - 22m
-  https://csicaribe.com/programs/safe-zapata-excentrica
+  https://csicaribe.com/catalog
 - SAFE - Correcta Aplicación del Drop Panel - 17m
-  https://csicaribe.com/programs/safe-drop-panel
+  https://csicaribe.com/catalog
 - SAFE - Determinación de Coeficiente de Balasto - 14m
-  https://csicaribe.com/programs/safe-coeficiente-balasto
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Zapatas Concéntricas Parte 01 - 12m
-  https://csicaribe.com/programs/safe-zapatas-concentricas-parte-01
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Zapatas Concéntricas Parte 02 - 14m
-  https://csicaribe.com/programs/safe-zapatas-concentricas-parte-02
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Zapatas Corridas o de Muro - 29m
-  https://csicaribe.com/programs/safe-zapatas-corridas-muro
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Cimentación Edificio 2 Pisos Acero Parte 01 - 15m
-  https://csicaribe.com/programs/safe-cimentacion-edificio-2pisos-acero-p01
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Cimentación Edificio 2 Pisos Acero Parte 02 - 14m
-  https://csicaribe.com/programs/safe-cimentacion-edificio-2pisos-acero-p02
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Cimentación Edificio 2 Pisos Acero Parte 03 - 19m
-  https://csicaribe.com/programs/safe-cimentacion-edificio-2pisos-acero-p03
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Cimentación Edificio 8 Pisos Parte 01 - 16m
-  https://csicaribe.com/programs/safe-cimentacion-edificio-8pisos-p01
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Cimentación Edificio 8 Pisos Parte 02 - 15m
-  https://csicaribe.com/programs/safe-cimentacion-edificio-8pisos-p02
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Cimentación Edificio 8 Pisos Parte 03 - 15m
-  https://csicaribe.com/programs/safe-cimentacion-edificio-8pisos-p03
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Platea Parte 01 - 18m
-  https://csicaribe.com/programs/safe-diseno-platea-parte-01
+  https://csicaribe.com/catalog
 - SAFE - Diseño de Platea Parte 02 - 18m
-  https://csicaribe.com/programs/safe-diseno-platea-parte-02
+  https://csicaribe.com/catalog
 
 SECCIÓN: SAP2000 - Análisis y Diseño Estructural (Suscripción)
 Categoría: https://csicaribe.com/categories/category-sap2000
 
 - SAP2000 - Análisis de armadura sometida a cambio de temperatura - 9m
-  https://csicaribe.com/programs/sap2000-armadura-cambio-temperatura
+  https://csicaribe.com/catalog
 - SAP2000 - Viga continua sometida a carga distribuida y asentamientos - 11m
-  https://csicaribe.com/programs/sap2000-viga-continua-carga-distribuida
+  https://csicaribe.com/catalog
 - SAP2000 - Pared sometida a presión hidroestática - 13m
-  https://csicaribe.com/programs/sap2000-pared-presion-hidrostatica
+  https://csicaribe.com/catalog
 - SAP2000 - Interacción marco-muro de corte - 17m
-  https://csicaribe.com/programs/sap2000-interaccion-marco-muro-corte
+  https://csicaribe.com/catalog
 - SAP2000 - Viga de concreto presforzado - 12m
-  https://csicaribe.com/programs/sap2000-viga-concreto-presforzado
+  https://csicaribe.com/catalog
 - SAP2000 - Viga sometida a carga viva móvil - 14m
-  https://csicaribe.com/programs/sap2000-viga-carga-viva-movil
+  https://csicaribe.com/catalog
 - SAP2000 - Carga Periódica - 14m
-  https://csicaribe.com/programs/sap2000-carga-periodica
+  https://csicaribe.com/catalog
 - SAP2000 - Geometría de tanque elevado y cilíndrico apoyado - 13m
-  https://csicaribe.com/programs/sap2000-tanque-elevado-cilindrico
+  https://csicaribe.com/catalog
 - SAP2000 - Apoyos Inclinados - 9m
-  https://csicaribe.com/programs/sap2000-apoyos-inclinados
+  https://csicaribe.com/catalog
 - SAP2000 - Viga sobre fundación elástica - 11m
-  https://csicaribe.com/programs/sap2000-viga-fundacion-elastica
+  https://csicaribe.com/catalog
 - SAP2000 - Estructura Bóveda - 12m
-  https://csicaribe.com/programs/sap2000-estructura-boveda
+  https://csicaribe.com/catalog
 - SAP2000 - Análisis de viga con abertura por elemento finito - 19m
-  https://csicaribe.com/programs/sap2000-viga-abertura-elemento-finito
+  https://csicaribe.com/catalog
 - SAP2000 - Marco de momento de acero - 11m
-  https://csicaribe.com/programs/sap2000-marco-momento-acero
+  https://csicaribe.com/catalog
 - SAP2000 - Tres Marcos Analizados Mediante Time History - 12m
-  https://csicaribe.com/programs/sap2000-tres-marcos-time-history
+  https://csicaribe.com/catalog
 - SAP2000 - Estadio - 12m
-  https://csicaribe.com/programs/sap2000-estadio
+  https://csicaribe.com/catalog
 - SAP2000 - Edificio de concreto de 4 niveles con cimentaciones profundas - 19m
-  https://csicaribe.com/programs/sap2000-edificio-concreto-4-niveles-cimentaciones
+  https://csicaribe.com/catalog
 - SAP2000 - Análisis estructural de una armadura en el plano - 9m
-  https://csicaribe.com/programs/sap2000-armadura-plano
+  https://csicaribe.com/catalog
 - SAP2000 - Muro de Concreto - 14m
-  https://csicaribe.com/programs/sap2000-muro-concreto
+  https://csicaribe.com/catalog
 - SAP2000 - Respuesta de análisis transitorio y caso modal - 12m
   https://csicaribe.com/programs/9-respuesta-de-analisis-transitorio-y-caso-modal-dbb928
 
@@ -217,21 +217,60 @@ SECCIÓN: Entrevista al Ing. Alfredo Ricart Nouel - 5 episodios GRATIS
 
 SECCIÓN: EVENTOS EXCLUSIVOS - Cursos, Masterclass, Series
 - PROGRAMA ESPECIALIDAD: Análisis y Diseño Estructural Edificios Altos Nivel Intermedio (15 episodios)
-  https://csicaribe.com/programs/collection-edificios-altos-intermedio
+  https://csicaribe.com/catalog
 - MASTERCLASS EXCLUSIVA: Generación de Plantas Estructurales con ETABS/API, Visual Basic .NET e IA (2 episodios)
   https://csicaribe.com/programs/collection-rjfwmigxglk
 - PROGRAMA ESPECIALIDAD EXCLUSIVO: Análisis y Diseño Estructural Edificios Altos Nivel Básico (9 episodios)
-  https://csicaribe.com/programs/collection-edificios-altos-basico
+  https://csicaribe.com/catalog
 - CURSO EXCLUSIVO: ADE, Proyecto Edificios Altos con ETABS v22.7.0 (13 episodios)
-  https://csicaribe.com/programs/collection-ade-etabs
+  https://csicaribe.com/catalog
 - CURSO EXCLUSIVO: Dinámica Estructural Dr. Dioniso Bernal (10 episodios)
-  https://csicaribe.com/programs/collection-dinamica-bernal
+  https://csicaribe.com/catalog
 - CURSO EXCLUSIVO: Dinámica Estructural con aplicación SAP2000 (10 episodios)
-  https://csicaribe.com/programs/collection-dinamica-sap2000
+  https://csicaribe.com/catalog
 - CURSO EXCLUSIVO: Diseño de Estructuras Metálicas con ETABS (8 episodios)
-  https://csicaribe.com/programs/collection-0yt7wdyepkk
+  https://csicaribe.com/catalog
 - CURSO EXCLUSIVO: Diseño de Muros de Mampostería con ETABS (8 episodios)
-  https://csicaribe.com/programs/collection-muros-mamposteria-etabs
+  https://csicaribe.com/catalog
+
+=== MEMBRESÍAS — PLANES (https://csicaribe.com/pages/planes) ===
+MEMBRESÍA FREEMIUM: $0 — exploración básica. Acceso limitado a videoteca, comunidad y calendario. Descarga de apps iOS y Android.
+MEMBRESÍA MENSUAL: $9/mes — versión PRO/SECI-E. Acceso TOTAL a videoteca, comunidad, calendario, webinars en vivo y grabados, descuentos en cursos y licencias CSi, manuales PDF, plugins, seminarios CSi Certifications, sorteos.
+MEMBRESÍA ANUAL: $99/año — versión PRO/SECI-E. Mismos beneficios que mensual al mejor precio.
+Nota: los cursos o series EXCLUSIVAS se compran aparte.
+Para suscribirse: https://csicaribe.com/pages/planes
+
+=== CONTACTOS CSi CARIBE+ ===
+OFICINAS:
+- Weston, Miami, USA: 16714 SW 99 CT. Miami, FL. 33157 — Tel: 1(809)534-1799
+- Santo Domingo, RD: Av. Bolívar No. 353, Torre Profesional Elam's II, Piso 7, Gazcue — Tel: 1(809)534-1799 / 1(829)301-6725 / 1(829)399-1062
+- Dubai, UAE: 19th floor, Suite 09, The Exchange Tower, Business Bay — Tel: +971 4 247 2627 / +971 50 680 0539
+EMAIL: csicaribe@csicaribe.com (general) | contacto@csicaribe.com (plataforma)
+
+VENDEDORES INTERNACIONALES:
+- Claudia Palins: ventas01@csicaribe.com — +1(809)931-4401
+- Gladys Pedemonte: ventas02@csicaribe.com — +1(809)931-4401
+- Roberto Tejeda: ventas04@csicaribe.com — +1(809)627-9791
+
+DEALERS DE LATINOAMÉRICA Y EL CARIBE:
+- ARGENTINA/URUGUAY: Gabriela Pérez — +54 9 11 3758-6389 — gabriela.argentina@csicaribe.com — C/Francia No. 2029, Buenos Aires
+- BELICE/PARAGUAY: Morrison Ingenieros — Nelson Morrison — 809-534-1799 — csicaribe@csicaribe.com
+- BOLIVIA: Marcoz Nuñez — 591-26262033 — marcos.bolivia@csicaribe.com — Av Chayanta Nro. 665, Bolivia
+- COLOMBIA: Softkey S.A.S — Yeaneth Anzola Sanabria — (300)3162298 — softkey.colombia@csicaribe.com — Cra. 11 B #99-54 Of. 702, Bogotá
+- COLOMBIA: Empresa JCCAD — Johanna Espinosa — +57 315 2508097 — licencias@jcad.com.co — Carrera 7 #71-21 Torre B Piso 13, Bogotá
+- ECUADOR: Triconsul Cia. Ltda. — Ing. Jorge Raad Silva — +593 6 2724446 — jorge.ecuador@csicaribe.com — Ave. Libertad 303, Esmeraldas
+- EL SALVADOR: Estructuras Sismo Resistentes — Francisco Arriaza — (503)7729-7447 — francisco.elsalvador@csicaribe.com
+- GUATEMALA: Proyectos de Ingeniería Nájera — Daniel Cruz — +502 3402 3034 — daniel.guatemala@csicaribe.com — Edif. Torino II, Nivel 5, Of. 509, Guatemala
+- HAITÍ: Constructions Caraibes — Philippe Lauture — +1 509 370 15398 — philippe.haiti@csicaribe.com
+- HONDURAS: Jose Renan Rivera — +504-230-3729 — jose.honduras@csicaribe.com — Col. Miraflores, Tegucigalpa
+- MEXICO: Construaprende — Ivan Forcada — (+52)(55)8488-4624 — ventas@csimexico.mx — Cuautitlan Izcalli, Estado de México
+- NICARAGUA: Yader Jarquin Montalva — +1 505 853 2992 — yader.nicaragua@csicaribe.com — Managua
+- PANAMÁ: Pc-Cad S.A. — Carlos Paredes — 507 2363937 — carlos.panama@csicaribe.com — El Dorado, Panamá
+- PERÚ: Disepro EIRL — Jorge Cabanillas — (01)5549518 — gerencia@disepro.com — Calle Gral. Borgono #440, Lima
+- PUERTO RICO: UNIPRO Architects & Engineer — Alan Heinsen — 787-528-8911 — alan.puertorico@csicaribe.com — Guaynabo, PR
+- REPÚBLICA DOMINICANA: CSi Caribe — Nelson Morrison — 809-534-1799 — csicaribe@csicaribe.com — Av. Bolívar 353, Piso 7, Santo Domingo
+- VENEZUELA: CSi Caribe — Eduardo Nuñez — 58-424-4114300 — eduardo.venezuela@csicaribe.com — Valencia
+- VENEZUELA: C&J Ingenieros — Jose M. Jacome — +58 212-661-9606 — jose.venezuela@csicaribe.com — Caracas
 
 === SOFTWARE CSi ===
 SAP2000 v27: análisis y diseño estructural general, acero, concreto, madera, análisis sísmico, dinámico, time-history, puentes con cargas móviles, API .NET 8
@@ -248,7 +287,7 @@ Canal YouTube CSi CARIBE+: https://youtube.com/@MorrisonIngenieros
 INSTRUCCIONES PARA RECOMENDAR VIDEOS:
 Cuando el usuario pregunte sobre un tema y exista un video relacionado en la videoteca, menciona el título exacto seguido de su URL en la siguiente línea. Ejemplo:
 ETABS - Peso Sísmico
-https://csicaribe.com/programs/etabs-peso-sismico`,
+https://csicaribe.com/catalog
         messages: [
           ...(history || []),
           { role: 'user', content: message }
