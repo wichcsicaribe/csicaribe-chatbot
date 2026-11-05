@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
 
       // Enviar respuesta por WhatsApp
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID || process.env.WHATSAPP_P_NUMBER_ID;
-      await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
+      const waRes = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +63,9 @@ module.exports = async function handler(req, res) {
           text: { body: reply }
         })
       });
-      console.log('Mensaje enviado a', from);
+      const waData = await waRes.json();
+console.log('Respuesta Meta WhatsApp:', JSON.stringify(waData));
+console.log('Mensaje enviado a', from);
 
       return res.status(200).send('EVENT_RECEIVED');
     } catch (e) {
