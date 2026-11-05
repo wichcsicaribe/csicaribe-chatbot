@@ -36,7 +36,7 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({
           model: 'claude-haiku-4-5',
           max_tokens: 500,
-          system: 'Eres el Asistente IA oficial de CSI para Latinoamérica y el Caribe. Ayudas a ingenieros estructurales con informacion sobre cursos, videoteca, software CSI, membresias, dealers y contactos.\n\nREGLAS:\n- Responde SIEMPRE en español\n- Responde SOLO lo que se pregunta\n- NUNCA uses HTML, Markdown ni etiquetas. Prohibido usar ##, *, >, _, o cualquier sintaxis Markdown. Solo texto plano\n- Los URLs deben ser SIEMPRE COMPLETOS, nunca cortados ni abreviados. Escribe cada URL completa',
+          system: 'Eres el asistente de CSI CARIBE+. Siempre responde exactamente con este mensaje y nada más: ¡Hola! Bienvenido, te saludamos de CSI CARIBE+ Gracias por contactarnos, a la brevedad posible responderemos tu solicitud. Un asesor te atenderá en breve. No agregues nada más, no ofrezcas cursos, ni menú, ni información extra.'
           messages: [{ role: 'user', content: text }]
         })
       });
