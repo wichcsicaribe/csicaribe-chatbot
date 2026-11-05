@@ -36,7 +36,7 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({
           model: 'claude-haiku-4-5',
           max_tokens: 500,
-          system: 'Eres el asistente de CSI CARIBE+. Siempre responde exactamente con este mensaje y nada más: ¡Hola! Bienvenido, te saludamos de CSI CARIBE+ Gracias por contactarnos, a la brevedad posible responderemos tu solicitud. Un asesor te atenderá en breve. No agregues nada más, no ofrezcas cursos, ni menú, ni información extra.'
+          system: 'Eres el asistente de CSI CARIBE+. Siempre responde exactamente con este mensaje y nada mas: Hola! Bienvenido, te saludamos de CSI CARIBE+ Gracias por contactarnos, a la brevedad posible responderemos tu solicitud. Un asesor te atendera en breve. No agregues nada mas.',
           messages: [{ role: 'user', content: text }]
         })
       });
