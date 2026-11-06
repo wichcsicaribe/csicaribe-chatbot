@@ -65,24 +65,6 @@ module.exports = async function handler(req, res) {
       });
       const waData = await waRes.json();
 console.log('Respuesta Meta WhatsApp:', JSON.stringify(waData));
-      // Avisar al admin por WhatsApp
-if (from !== '51984722555') {
-  try {
-    await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: '51984722555',
-        type: 'text',
-        text: { body: `Nuevo mensaje CSI CARIBE+ de ${from}: ${text}` }
-      })
-    });
-  } catch (e) {}
-}
 console.log('Mensaje enviado a', from);
 
       return res.status(200).send('EVENT_RECEIVED');
