@@ -11,22 +11,53 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      console.log('WA webhook recibido:', JSON.stringify(req.body || {}));
       const entry = req.body?.entry?.[0];
       const change = entry?.changes?.[0];
       const value = change?.value;
       const msg = value?.messages?.[0];
-
-      // Si no es mensaje de texto, solo responder OK
       if (!msg || msg.type !== 'text') {
         return res.status(200).send('EVENT_RECEIVED');
       }
 
       const from = msg.from;
       const text = msg.text?.body || '';
-      const OWNER_NUMBER = '51984722555'; // tu personal
+      const OWNER_NUMBER = '51984722555';
+      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID || process.env.WHATSAPP_P_NUMBER_ID;
 
-      // Llamar a Claude igual que en chat.js
+      const sendWA = async (to, body) => {
+        await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: to,
+            type: 'text',
+            text: { body: body }
+          })
+        });
+      };
+
+      // SI ERES TU EL DUEÑO RESPONDIENDO A UN CLIENTE
+      // Tu mandas al bot: 51987654321: Hola, si tenemos tour
+      if (from === OWNER_NUMBER) {
+        const match = text.match(/^(\+?51\d{9}|\d{9,15})\s*:\s*([\s\S]+)/);
+        if (match) {
+          let target = match[1].replace('+', '');
+          if (target.length === 9) target = '51' + target;
+          const replyText = match[2].trim();
+          await sendWA(target, replyText);
+          await sendWA(OWNER_NUMBER, `✅ Enviado a +${target} desde 992 103 781:\n"${replyText}"`);
+          return res.status(200).send('EVENT_RECEIVED');
+        } else {
+          await sendWA(OWNER_NUMBER, `Para responder a un cliente, escribe:\n\nnumero: mensaje\n\nEjemplo:\n51987654321: Hola, si tenemos tour mañana`);
+          return res.status(200).send('EVENT_RECEIVED');
+        }
+      }
+
+      // SI ES CLIENTE - Llamar a Claude
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -44,51 +75,12 @@ module.exports = async function handler(req, res) {
 
       const data = await response.json();
       let reply = 'Perdona, no pude procesar tu mensaje. ¿Puedes intentarlo de nuevo?';
-      if (data?.content?.[0]?.text) {
-        reply = data.content[0].text;
-      }
-      console.log('Respuesta Claude:', reply);
+      if (data?.content?.[0]?.text) reply = data.content[0].text;
 
-      // Enviar respuesta por WhatsApp
-      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID || process.env.WHATSAPP_P_NUMBER_ID;
-      const waRes = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: from,
-          type: 'text',
-          text: { body: reply }
-        })
-      });
-      const waData = await waRes.json();
-      console.log('Respuesta Meta WhatsApp:', JSON.stringify(waData));
-      console.log('Mensaje enviado a', from);
+      await sendWA(from, reply);
 
-      // AVISAR AL DUEÑO - si no eres tu mismo, reenviar copia a tu personal
-      if (from !== OWNER_NUMBER) {
-        try {
-          await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
-            },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: OWNER_NUMBER,
-              type: 'text',
-              text: { body: `🔔 NUEVO MENSAJE - CSI CARIBE\nDe: +${from}\nMensaje: "${text}"\n\nPara contestarle, escribelo directo a +${from} desde tu personal.` }
-            })
-          });
-          console.log('Aviso enviado al dueño');
-        } catch (e) {
-          console.error('Error avisando al dueño:', e);
-        }
-      }
+      // Avisar al dueño
+      await sendWA(OWNER_NUMBER, `🔔 NUEVO MENSAJE - CSI CARIBE\nDe: +${from}\nMensaje: "${text}"\n\nPara contestar desde el 992 103 781, mandame al bot:\n${from}: tu respuesta`);
 
       return res.status(200).send('EVENT_RECEIVED');
     } catch (e) {
@@ -96,6 +88,5 @@ module.exports = async function handler(req, res) {
       return res.status(200).send('EVENT_RECEIVED');
     }
   }
-
   return res.status(405).end();
 };
