@@ -24,6 +24,7 @@ module.exports = async function handler(req, res) {
 
       const from = msg.from;
       const text = msg.text?.body || '';
+      const OWNER_NUMBER = '51984722555'; // tu personal
 
       // Llamar a Claude igual que en chat.js
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -64,8 +65,30 @@ module.exports = async function handler(req, res) {
         })
       });
       const waData = await waRes.json();
-console.log('Respuesta Meta WhatsApp:', JSON.stringify(waData));
-console.log('Mensaje enviado a', from);
+      console.log('Respuesta Meta WhatsApp:', JSON.stringify(waData));
+      console.log('Mensaje enviado a', from);
+
+      // AVISAR AL DUEÑO - si no eres tu mismo, reenviar copia a tu personal
+      if (from !== OWNER_NUMBER) {
+        try {
+          await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: OWNER_NUMBER,
+              type: 'text',
+              text: { body: `🔔 NUEVO MENSAJE - CSI CARIBE\nDe: +${from}\nMensaje: "${text}"\n\nPara contestarle, escribelo directo a +${from} desde tu personal.` }
+            })
+          });
+          console.log('Aviso enviado al dueño');
+        } catch (e) {
+          console.error('Error avisando al dueño:', e);
+        }
+      }
 
       return res.status(200).send('EVENT_RECEIVED');
     } catch (e) {
