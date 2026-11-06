@@ -15,56 +15,62 @@ module.exports = async function handler(req, res) {
       const change = entry?.changes?.[0];
       const value = change?.value;
       const msg = value?.messages?.[0];
-      if (!msg || msg.type !== 'text') {
-        return res.status(200).send('EVENT_RECEIVED');
-      }
+      if (!msg || msg.type !== 'text') return res.status(200).send('EVENT_RECEIVED');
 
       const from = msg.from;
       const text = msg.text?.body || '';
+      const clientName = value?.contacts?.[0]?.profile?.name || 'Sin nombre';
       const OWNER_NUMBER = '51984722555';
       const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID || process.env.WHATSAPP_P_NUMBER_ID;
 
       const sendWA = async (to, body) => {
         await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            to: to,
-            type: 'text',
-            text: { body: body }
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}` },
+          body: JSON.stringify({ messaging_product: 'whatsapp', to: to, type: 'text', text: { body: body } })
         });
       };
 
-      // SI ERES TU EL DUEÑO RESPONDIENDO A UN CLIENTE
-      // Tu mandas al bot: 51987654321: Hola, si tenemos tour
+      // Guardar chat para la bandeja web (se guarda en Google Sheet si lo configuras, si no solo en logs)
+      if (process.env.SHEET_WEBHOOK_URL) {
+        try {
+          await fetch(process.env.SHEET_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from, name: clientName, text, date: new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' }) })
+          });
+        } catch(e) {}
+      }
+
+      // SI ERES TU RESPONDIENDO
       if (from === OWNER_NUMBER) {
         const match = text.match(/^(\+?51\d{9}|\d{9,15})\s*:\s*([\s\S]+)/);
         if (match) {
           let target = match[1].replace('+', '');
           if (target.length === 9) target = '51' + target;
-          const replyText = match[2].trim();
-          await sendWA(target, replyText);
-          await sendWA(OWNER_NUMBER, `✅ Enviado a +${target} desde 992 103 781:\n"${replyText}"`);
+          await sendWA(target, match[2].trim());
+          await sendWA(OWNER_NUMBER, `✅ Enviado a +${target} desde 992 103 781`);
           return res.status(200).send('EVENT_RECEIVED');
         } else {
-          await sendWA(OWNER_NUMBER, `Para responder a un cliente, escribe:\n\nnumero: mensaje\n\nEjemplo:\n51987654321: Hola, si tenemos tour mañana`);
+          await sendWA(OWNER_NUMBER, `Para responder: numero: mensaje\nEj: 51987654321: Hola`);
           return res.status(200).send('EVENT_RECEIVED');
         }
       }
 
-      // SI ES CLIENTE - Llamar a Claude
+      // MODO NOCHE: 21:00 a 07:00 hora Peru
+      const horaPeru = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' })).getHours();
+      const esNoche = horaPeru >= 21 || horaPeru < 7;
+
+      if (esNoche) {
+        // De noche NO responde el bot, solo te avisa a ti
+        await sendWA(OWNER_NUMBER, `🌙 MENSAJE DE NOCHE - CSI CARIBE\nDe: ${clientName} (+${from})\nMensaje: "${text}"\nHora: ${new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' })}\n\nEl bot NO respondió. Para contestar desde el 992 103 781, mandame:\n${from}: tu respuesta`);
+        return res.status(200).send('EVENT_RECEIVED');
+      }
+
+      // DE DIA - responde Claude normal
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5',
           max_tokens: 500,
@@ -72,19 +78,16 @@ module.exports = async function handler(req, res) {
           messages: [{ role: 'user', content: text }]
         })
       });
-
       const data = await response.json();
       let reply = 'Perdona, no pude procesar tu mensaje. ¿Puedes intentarlo de nuevo?';
       if (data?.content?.[0]?.text) reply = data.content[0].text;
 
       await sendWA(from, reply);
-
-      // Avisar al dueño
-      await sendWA(OWNER_NUMBER, `🔔 NUEVO MENSAJE - CSI CARIBE\nDe: +${from}\nMensaje: "${text}"\n\nPara contestar desde el 992 103 781, mandame al bot:\n${from}: tu respuesta`);
+      await sendWA(OWNER_NUMBER, `🔔 NUEVO MENSAJE - CSI CARIBE\nDe: ${clientName} (+${from})\nMensaje: "${text}"\n\nPara contestar desde el 992 103 781:\n${from}: tu respuesta`);
 
       return res.status(200).send('EVENT_RECEIVED');
     } catch (e) {
-      console.error('Error en whatsapp:', e);
+      console.error('Error:', e);
       return res.status(200).send('EVENT_RECEIVED');
     }
   }
