@@ -91,12 +91,7 @@ module.exports = async function handler(req, res) {
       const data = await response.json();
       let reply = 'Perdona, no pude procesar tu mensaje. ¿Puedes intentarlo de nuevo?';
       if (data?.content?.[0]?.text) reply = data.content[0].text;
-
-      // Si es de noche, le agregamos el aviso de noche al inicio
-      if (esNoche) {
-        reply = `Hola, gracias por escribirnos de noche 🌙 Soy el asistente de CSI CARIBE+ y te atiendo ahora mismo.\n\n${reply}`;
-      }
-
+     
       await sendWA(from, reply);
 
       // Aviso para ti - con link del post si vino de Facebook
