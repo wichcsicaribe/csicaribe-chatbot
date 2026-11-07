@@ -31,13 +31,29 @@ module.exports = async function handler(req, res) {
         });
       };
 
-      // Guardar chat para la bandeja web (se guarda en Google Sheet si lo configuras, si no solo en logs)
+      // === 2. DETECTAR SI VIENE DE UN POST / ANUNCIO DE FACEBOOK ===
+      // Meta manda esto cuando el cliente da clic en "WhatsApp" desde un post/anuncio
+      const referral = msg.referral || msg.context?.referral || null;
+      let linkPost = '';
+      let infoPost = '';
+      if (referral) {
+        // source_url = link del post, headline = titulo del anuncio, source_id = id del post
+        linkPost = referral.source_url || '';
+        const titulo = referral.headline || '';
+        const idPost = referral.source_id || '';
+        infoPost = `\n🔗 Viene del post: ${linkPost || idPost || 'Facebook Ad'}${titulo ? `\n📌 Anuncio: ${titulo}` : ''}`;
+      }
+
+      // Texto que guardamos en el Sheet (con el link incluido para que lo veas en la web)
+      const textParaGuardar = linkPost ? `${text}${infoPost}` : text;
+
+      // Guardar chat para la bandeja web
       if (process.env.SHEET_WEBHOOK_URL) {
         try {
           await fetch(process.env.SHEET_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ from, name: clientName, text, date: new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' }) })
+            body: JSON.stringify({ from, name: clientName, text: textParaGuardar, date: new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' }) })
           });
         } catch(e) {}
       }
@@ -57,17 +73,11 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // MODO NOCHE: 21:00 a 07:00 hora Peru
+      // === 1. MODO NOCHE: AHORA SI RESPONDE ===
       const horaPeru = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' })).getHours();
       const esNoche = horaPeru >= 21 || horaPeru < 7;
 
-      if (esNoche) {
-        // De noche NO responde el bot, solo te avisa a ti
-        await sendWA(OWNER_NUMBER, `🌙 MENSAJE DE NOCHE - CSI CARIBE\nDe: ${clientName} (+${from})\nMensaje: "${text}"\nHora: ${new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' })}\n\nEl bot NO respondió. Para contestar desde el 992 103 781, mandame:\n${from}: tu respuesta`);
-        return res.status(200).send('EVENT_RECEIVED');
-      }
-
-      // DE DIA - responde Claude normal
+      // DE DIA Y DE NOCHE - responde Claude normal
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -82,8 +92,17 @@ module.exports = async function handler(req, res) {
       let reply = 'Perdona, no pude procesar tu mensaje. ¿Puedes intentarlo de nuevo?';
       if (data?.content?.[0]?.text) reply = data.content[0].text;
 
+      // Si es de noche, le agregamos el aviso de noche al inicio
+      if (esNoche) {
+        reply = `Hola, gracias por escribirnos de noche 🌙 Soy el asistente de CSI CARIBE+ y te atiendo ahora mismo.\n\n${reply}`;
+      }
+
       await sendWA(from, reply);
-      await sendWA(OWNER_NUMBER, `🔔 NUEVO MENSAJE - CSI CARIBE\nDe: ${clientName} (+${from})\nMensaje: "${text}"\n\nPara contestar desde el 992 103 781:\n${from}: tu respuesta`);
+
+      // Aviso para ti - con link del post si vino de Facebook
+      const icono = esNoche ? '🌙' : '🔔';
+      const tituloAviso = esNoche ? 'MENSAJE DE NOCHE - CSI CARIBE (Bot ya respondió)' : 'NUEVO MENSAJE - CSI CARIBE';
+      await sendWA(OWNER_NUMBER, `${icono} ${tituloAviso}\nDe: ${clientName} (+${from})\nMensaje: "${text}"${infoPost}\n\nEl bot respondió: "${reply}"\n\nPara contestar desde el 992 103 781:\n${from}: tu respuesta`);
 
       return res.status(200).send('EVENT_RECEIVED');
     } catch (e) {
