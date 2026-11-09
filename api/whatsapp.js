@@ -1,3 +1,9 @@
+const { Redis } = require('@upstash/redis');
+const kv = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_KV_URL,
+  token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
+});
+
 module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     const mode = req.query['hub.mode'];
@@ -31,23 +37,26 @@ module.exports = async function handler(req, res) {
         });
       };
 
+      // === GUARDAR EN LA BASE PARA EL PANEL ===
+      try {
+        await kv.rpush(`chat:${from}`, JSON.stringify({ from, name: clientName, text, dir: 'in', time: Date.now() }));
+        await kv.zadd('chats', { score: Date.now(), member: from });
+        await kv.hset(`contact:${from}`, { name: clientName, phone: from, lastMessage: text, lastTime: Date.now() });
+      } catch(e) { console.log('KV error in:', e.message); }
+
       // === 2. DETECTAR SI VIENE DE UN POST / ANUNCIO DE FACEBOOK ===
-      // Meta manda esto cuando el cliente da clic en "WhatsApp" desde un post/anuncio
       const referral = msg.referral || msg.context?.referral || null;
       let linkPost = '';
       let infoPost = '';
       if (referral) {
-        // source_url = link del post, headline = titulo del anuncio, source_id = id del post
         linkPost = referral.source_url || '';
         const titulo = referral.headline || '';
         const idPost = referral.source_id || '';
         infoPost = `\n🔗 Viene del post: ${linkPost || idPost || 'Facebook Ad'}${titulo ? `\n📌 Anuncio: ${titulo}` : ''}`;
       }
-
-      // Texto que guardamos en el Sheet (con el link incluido para que lo veas en la web)
       const textParaGuardar = linkPost ? `${text}${infoPost}` : text;
 
-      // Guardar chat para la bandeja web
+      // Guardar chat para la bandeja web (Sheet que ya tenías)
       if (process.env.SHEET_WEBHOOK_URL) {
         try {
           await fetch(process.env.SHEET_WEBHOOK_URL, {
@@ -65,6 +74,11 @@ module.exports = async function handler(req, res) {
           let target = match[1].replace('+', '');
           if (target.length === 9) target = '51' + target;
           await sendWA(target, match[2].trim());
+          // Guardar tu respuesta también en el panel
+          try {
+            await kv.rpush(`chat:${target}`, JSON.stringify({ from: target, name: 'Tu', text: match[2].trim(), dir: 'out', time: Date.now() }));
+            await kv.hset(`contact:${target}`, { name: target, phone: target, lastMessage: match[2].trim(), lastTime: Date.now() });
+          } catch(e) {}
           await sendWA(OWNER_NUMBER, `✅ Enviado a +${target} desde 992 103 781`);
           return res.status(200).send('EVENT_RECEIVED');
         } else {
@@ -73,11 +87,10 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      // === 1. MODO NOCHE: AHORA SI RESPONDE ===
+      // === 1. MODO NOCHE ===
       const horaPeru = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' })).getHours();
       const esNoche = horaPeru >= 21 || horaPeru < 7;
 
-      // DE DIA Y DE NOCHE - responde Claude normal
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -94,7 +107,11 @@ module.exports = async function handler(req, res) {
      
       await sendWA(from, reply);
 
-      // Aviso para ti - con link del post si vino de Facebook
+      // Guardar respuesta del bot en el panel
+      try {
+        await kv.rpush(`chat:${from}`, JSON.stringify({ from, name: 'CSI CARIBE+', text: reply, dir: 'out', time: Date.now() }));
+      } catch(e) {}
+
       const icono = esNoche ? '🌙' : '🔔';
       const tituloAviso = esNoche ? 'MENSAJE DE NOCHE - CSI CARIBE (Bot ya respondió)' : 'NUEVO MENSAJE - CSI CARIBE';
       await sendWA(OWNER_NUMBER, `${icono} ${tituloAviso}\nDe: ${clientName} (+${from})\nMensaje: "${text}"${infoPost}\n\nEl bot respondió: "${reply}"\n\nPara contestar desde el 992 103 781:\n${from}: tu respuesta`);
