@@ -1,6 +1,6 @@
 const { Redis } = require('@upstash/redis');
 const kv = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_KV_URL,
+  url: process.env.UPSTASH_REDIS_REST_API_URL,
   token: process.env.UPSTASH_REDIS_ST_API_TOKEN,
 });
 
