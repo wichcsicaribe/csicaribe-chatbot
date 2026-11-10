@@ -44,7 +44,7 @@ async function openChat(phone){
   msgs.forEach(m=>{
     const t=getTime(m); const d=fmtDate(t);
     if(d && d!==lastDate){ html+=`<div class="datesep"><span>${d}</span></div>`; lastDate=d; }
-    const pUrl=m.post_url||headerPost; const postHtml=pUrl?`<br><a href="${pUrl}" target="_blank" style="font-size:11px">🔗 Ver post: ${pUrl}</a>`:'';
+    const postHtml=m.post_url?`<br><a href="${m.post_url}" target="_blank" style="font-size:11px">🔗 Ver post: ${m.post_url}</a>`:'';
     html+=`<div class="${m.dir==='in'?'in':'out'}">${m.text||''}${postHtml}<div class="time">${fmtTime(t)}</div></div>`;
   });
   document.getElementById('msgs').innerHTML=html||'<p style="color:#888">Sin mensajes</p>';
