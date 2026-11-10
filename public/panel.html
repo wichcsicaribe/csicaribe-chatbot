@@ -47,7 +47,7 @@ async function readExcel(e){
 async function sendBulk(){
   const tpl=document.getElementById('bulkMsg').value; if(!tpl||!bulkList.length) return alert('Sube Excel y escribe mensaje');
   for(let i=0;i<bulkList.length;i++){
-    const c=bulkList[i]; const text=tpl.replaceAll('{nombre}',c.name||'').replaceAll('{phone}',c.phone);
+    const c=bulkList[i]; const text=tpl.replaceAll('{nombre}',c.name||'').replaceAll('{phone}',c.phone).replaceAll('{post}',c.post_url||'').replaceAll('{post_url}',c.post_url||'');
     document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name;
     await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:c.phone,text,post_url:c.post_url})});
     await new Promise(r=>setTimeout(r,2000));
