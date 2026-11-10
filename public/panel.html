@@ -4,11 +4,38 @@
 <style>body{margin:0;font-family:sans-serif;display:flex;height:100vh}#list{width:320px;border-right:1px solid #ddd;overflow:auto}#chat{flex:1;display:flex;flex-direction:column}#msgs{flex:1;overflow:auto;padding:16px}.in{background:#eee;padding:8px 12px;border-radius:12px;margin:6px 0;max-width:70%}.out{background:#dcf8c6;padding:8px 12px;border-radius:12px;margin:6px 0 6px auto;max-width:70%;text-align:right}.contact{padding:12px;border-bottom:1px solid #eee;cursor:pointer}.contact b{display:block}</style>
 </head><body>
 <div id="list"><h3 style="padding:12px">CSI CARIBE+ - Mensajes</h3><input id="search" placeholder="Buscar..." oninput="loadChats()" style="margin:0 12px 10px;padding:8px;width:85%"><div id="contacts">Cargando...</div></div>
-<div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee"><b id="curName">Selecciona un chat</b> <span id="curPhone"></span> <a id="curPost" target="_blank" style="display:none;margin-left:10px">Ver post 🔗</a></div><div id="msgs"><p style="color:#888">Selecciona un chat</p></div>
+<div style="padding:0 12px 12px;border-bottom:2px solid #25D366">
+<button onclick="document.getElementById('excelFile').click()" style="width:100%;padding:10px;background:#25D366;border:0;border-radius:8px;color:#fff;cursor:pointer">📊 Enviar Masivo con Excel</button>
+<input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="readExcel(event)">
+<div id="bulkBox" style="display:none;margin-top:10px">
+<textarea id="bulkMsg" style="width:92%;padding:8px" rows="3" placeholder="Hola {nombre}, te escribimos de CSI CARIBE+..."></textarea>
+<div id="bulkPreview" style="font-size:12px;margin:8px 0"></div>
+<button onclick="sendBulk()" style="width:100%;padding:10px;background:#000;color:#fff;border:0;border-radius:8px">Enviar a todos ▶</button>
+<div id="bulkStatus" style="font-size:12px;margin-top:6px"></div>
+</div></div>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee"><b id="curName">Selecciona un chat</b> <span id="curPhone"></span> <a id="curPost" target="_blank" style="display:none;margin-left:10px">Ver post 🔗</a></div><div id="msgs"><p style="color:#888">Selecciona un chat</p></div>
 <div style="display:flex;padding:12px;gap:8px"><input id="input" style="flex:1;padding:10px" placeholder="Escribe tu respuesta..."><button onclick="send()" style="padding:10px 20px;background:#25D366;border:0;border-radius:8px;color:#fff">Enviar</button></div></div>
 <script>
 let current=null, allChats=[];
-async function loadChats(){
+async function let bulkList=[];
+async function readExcel(e){
+  const f=e.target.files[0]; const data=await f.arrayBuffer(); const wb=XLSX.read(data); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws);
+  bulkList=rows.map(r=>({phone:String(r.phone||r.telefono||r.numero||r.celular||Object.values(r)[0]||'').replace(/\D/g,''), name:r.nombre||r.name||r.Nombre||'', post_url:r.post_url||r.link||r.post||''}));
+  document.getElementById('bulkBox').style.display='block';
+  document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos. Primero: '+(bulkList[0]?.name||'')+' '+ (bulkList[0]?.phone||'');
+}
+async function sendBulk(){
+  const tpl=document.getElementById('bulkMsg').value; if(!tpl||!bulkList.length) return alert('Sube Excel y escribe mensaje');
+  for(let i=0;i<bulkList.length;i++){
+    const c=bulkList[i]; const text=tpl.replaceAll('{nombre}',c.name||'').replaceAll('{phone}',c.phone);
+    document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name;
+    await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:c.phone,text,post_url:c.post_url})});
+    await new Promise(r=>setTimeout(r,2000));
+  }
+  document.getElementById('bulkStatus').innerText='✅ Listo! Se enviaron '+bulkList.length;
+  loadChats();
+}loadChats(){
   const r=await fetch('/api/messages'); allChats=await r.json();
   const q=(document.getElementById('search').value||'').toLowerCase();
   const chats=allChats.filter(c=>((c.name||'')+' '+(c.phone||'')).toLowerCase().includes(q));
