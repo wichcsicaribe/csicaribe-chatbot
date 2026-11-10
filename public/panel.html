@@ -11,7 +11,7 @@ let current=null, allChats=[];
 async function loadChats(){
   const r=await fetch('/api/messages'); allChats=await r.json();
   const q=(document.getElementById('search').value||'').toLowerCase();
-  const chats=allChats.filter(c=>(c.name+c.phone).toLowerCase().includes(q));
+  const chats=allChats.filter(c=>((c.name||'')+' '+(c.phone||'')).toLowerCase().includes(q));
   document.getElementById('contacts').innerHTML=chats.map(c=>`<div class="contact" onclick="openChat('${c.phone}')"><b>${c.name}</b><span>${c.phone}</span><br><small>${c.lastMessage||''}</small></div>`).join('');
 }
 async function openChat(phone){
