@@ -5,7 +5,6 @@ const kv = new Redis({
 });
 
 module.exports = async function handler(req, res) {
-  // Verificación de WhatsApp
   if (req.method === 'GET') {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
@@ -23,32 +22,23 @@ module.exports = async function handler(req, res) {
       const value = change?.value;
       const msgs = value?.messages || [];
       const contacts = value?.contacts || [];
+      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID || process.env.WHATSAPP_P_NUMBER_ID;
+      const MY_PHONE = process.env.MY_PHONE || ''; // tu personal, ej: 51984763356
 
       for (const m of msgs) {
         const phone = m.from;
         const name = contacts.find(c => c.wa_id === phone)?.profile?.name || phone;
         const text = m.text?.body || m.button?.text || m.interactive?.button_reply?.title || '[mensaje sin texto]';
-
-        // *** AQUÍ ESTÁ LA CLAVE: el link del post viene en referral, no en el texto ***
-        // Cuando Pilar le da clic al anuncio en Facebook, WhatsApp manda:
-        // referral = { source_url: "https://fb.me/aq979DDXX", source_id: "...", headline: "...", body: "..." }
         const referral = m.referral || m.context?.referral || null;
-        const post_url = referral?.source_url || referral?.source_id || m.context?.referred_product?.catalog_id || '';
-
-        // Si trae link, guardamos también el título del anuncio
+        const post_url = referral?.source_url || referral?.source_id || '';
         const post_title = referral?.headline || referral?.body || '';
 
-        console.log('Mensaje de', phone, 'post_url:', post_url);
-
-        // 1. Guardar mensaje CON post_url
         await kv.rpush(`chat:${phone}`, JSON.stringify({
           from: phone, name, text, dir: 'in', time: Date.now(),
-          post_url: post_url || '',
-          post_title: post_title || ''
+          post_url: post_url || '', post_title: post_title || ''
         }));
         await kv.zadd('chats', { score: Date.now(), member: phone });
 
-        // 2. Guardar contacto - NO borrar post_url viejo si este mensaje no trae link
         const existing = await kv.hgetall(`contact:${phone}`) || {};
         await kv.hset(`contact:${phone}`, {
           phone: phone,
@@ -58,6 +48,17 @@ module.exports = async function handler(req, res) {
           post_url: post_url || existing.post_url || '',
           post_title: post_title || existing.post_title || ''
         });
+
+        // *** NOTIFICACIÓN A TU PERSONAL ***
+        // Solo si te escribe un cliente, no si te escribes tú mismo
+        if (MY_PHONE && phone !== MY_PHONE) {
+          const notif = `🔔 Nuevo mensaje en CSI CARIBE+\n\nDe: ${name} (${phone})\nMensaje: ${text}` + (post_url ? `\nPost: ${post_url}` : '');
+          await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messaging_product: 'whatsapp', to: MY_PHONE, type: 'text', text: { body: notif } })
+          }).catch(e => console.log('No se pudo notificar', e));
+        }
       }
       return res.json({ ok: true });
     } catch (e) {
