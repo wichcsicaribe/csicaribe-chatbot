@@ -1,22 +1,44 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Panel CSI CARIBE+</title>
-<style>body{margin:0;font-family:sans-serif;display:flex;height:100vh}#list{width:320px;border-right:1px solid #ddd;overflow:auto}#chat{flex:1;display:flex;flex-direction:column}#msgs{flex:1;overflow:auto;padding:16px}.in{background:#eee;padding:8px 12px;border-radius:12px;margin:6px 0;max-width:70%}.out{background:#dcf8c6;padding:8px 12px;border-radius:12px;margin:6px 0 6px auto;max-width:70%;text-align:right}.contact{padding:12px;border-bottom:1px solid #eee;cursor:pointer}.contact b{display:block}.time{font-size:11px;color:#888;margin-top:4px}.datesep{text-align:center;margin:14px 0 6px}.datesep span{background:#eef2f7;padding:4px 12px;border-radius:12px;font-size:12px;color:#555}</style>
+<style>
+body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
+#list{width:340px;border-right:1px solid #ddd;overflow:auto;flex-shrink:0}
+#chat{flex:1;display:flex;flex-direction:column;min-width:0}
+#msgs{flex:1;overflow:auto;padding:16px}
+.in{background:#eee;padding:8px 12px;border-radius:12px;margin:6px 0;max-width:80%;word-break:break-word}
+.out{background:#dcf8c6;padding:8px 12px;border-radius:12px;margin:6px 0 6px auto;max-width:80%;text-align:right;word-break:break-word}
+.contact{padding:12px;border-bottom:1px solid #eee;cursor:pointer}
+.contact b{display:block}.time{font-size:11px;color:#888;margin-top:4px}
+.datesep{text-align:center;margin:14px 0 6px}.datesep span{background:#eef2f7;padding:4px 12px;border-radius:12px;font-size:12px;color:#555}
+#backBtn{display:none}
+/* --- MÓVIL --- */
+@media(max-width:768px){
+  body{flex-direction:column}
+  #list{width:100%;border-right:0}
+  #chat{display:none;width:100%}
+  body.chat-open #list{display:none}
+  body.chat-open #chat{display:flex}
+  #backBtn{display:inline-block;margin-right:8px;padding:6px 10px;border:0;background:#eee;border-radius:8px}
+  .contact{padding:14px}
+  #input{font-size:16px}
+}
+</style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head><body>
 <div id="list"><h3 style="padding:12px">CSI CARIBE+ - Mensajes</h3>
 <div style="padding:0 12px 12px;border-bottom:2px solid #25D366">
-<button onclick="document.getElementById('excelFile').click()" style="width:100%;padding:10px;background:#25D366;border:0;border-radius:8px;color:#fff;cursor:pointer">📊 Enviar Masivo con Excel</button>
+<button onclick="document.getElementById('excelFile').click()" style="width:100%;padding:12px;background:#25D366;border:0;border-radius:8px;color:#fff;cursor:pointer;font-size:15px">📊 Enviar Masivo con Excel</button>
 <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="readExcel(event)">
 <div id="bulkBox" style="display:none;margin-top:10px">
-<textarea id="bulkMsg" style="width:92%;padding:8px" rows="3" placeholder="Hola {nombre}, te escribimos de CSI CARIBE+..."></textarea>
+<textarea id="bulkMsg" style="width:92%;padding:8px;font-size:15px" rows="3" placeholder="Hola {nombre}, te escribimos de CSI CARIBE+..."></textarea>
 <div id="bulkPreview" style="font-size:12px;margin:8px 0"></div>
-<button onclick="sendBulk()" style="width:100%;padding:10px;background:#000;color:#fff;border:0;border-radius:8px">Enviar a todos ▶</button>
+<button onclick="sendBulk()" style="width:100%;padding:12px;background:#000;color:#fff;border:0;border-radius:8px">Enviar a todos ▶</button>
 <div id="bulkStatus" style="font-size:12px;margin-top:6px"></div>
 </div></div>
-<input id="search" placeholder="Buscar..." oninput="loadChats()" style="margin:10px 12px;padding:8px;width:85%"><div id="contacts">Cargando...</div></div>
-<div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee"><b id="curName">Selecciona un chat</b> <span id="curPhone"></span> <a id="curPost" target="_blank" style="display:none;margin-left:10px">Ver post 🔗</a><div id="curPostBox" style="font-size:12px;margin-top:4px;color:#555;word-break:break-all"></div></div><div id="msgs"><p style="color:#888">Selecciona un chat</p></div>
-<div style="display:flex;padding:12px;gap:8px"><input id="input" style="flex:1;padding:10px" placeholder="Escribe tu respuesta..."><button onclick="send()" style="padding:10px 20px;background:#25D366;border:0;border-radius:8px;color:#fff">Enviar</button></div></div>
+<input id="search" placeholder="Buscar..." oninput="loadChats()" style="margin:10px 12px;padding:10px;width:85%;font-size:15px"><div id="contacts">Cargando...</div></div>
+<div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee"><button id="backBtn" onclick="document.body.classList.remove('chat-open')">← Atrás</button><b id="curName">Selecciona un chat</b> <span id="curPhone"></span> <a id="curPost" target="_blank" style="display:none;margin-left:10px">Ver post 🔗</a><div id="curPostBox" style="font-size:12px;margin-top:4px;color:#555;word-break:break-all"></div></div><div id="msgs"><p style="color:#888">Selecciona un chat</p></div>
+<div style="display:flex;padding:12px;gap:8px"><input id="input" style="flex:1;padding:12px;font-size:16px" placeholder="Escribe tu respuesta..."><button onclick="send()" style="padding:12px 18px;background:#25D366;border:0;border-radius:8px;color:#fff;font-size:15px">Enviar</button></div></div>
 <script>
 let current=null, allChats=[], bulkList=[];
 function fmtTime(t){ if(!t) return ''; const d=new Date(typeof t==='number'?t:t); if(isNaN(d)) return ''; return d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}); }
@@ -29,17 +51,15 @@ async function loadChats(){
   document.getElementById('contacts').innerHTML=chats.map(c=>`<div class="contact" onclick="openChat('${c.phone}')"><b>${c.name||c.phone||'Sin nombre'}</b><span>${c.phone||''}</span><br><small>${c.lastMessage||''}</small><br><small style="color:#888">${fmtTime(getTime(c))} ${c.post_url?'🔗 Post':''}</small></div>`).join('');
 }
 async function openChat(phone){
-  current=phone;
+  current=phone; document.body.classList.add('chat-open');
   const c=allChats.find(x=>String(x.phone)==String(phone));
   let headerPost=c?.post_url||'';
   if(c){ document.getElementById('curName').innerText=c.name||c.phone; document.getElementById('curPhone').innerText=c.phone; }
   const r=await fetch('/api/messages?phone='+phone); const msgs=await r.json();
-  // buscar post en cualquier mensaje si el contacto no lo tiene
   if(!headerPost){ const withPost=msgs.find(m=>m.post_url); if(withPost) headerPost=withPost.post_url; }
   const a=document.getElementById('curPost'); const box=document.getElementById('curPostBox');
   if(headerPost){ a.style.display='inline'; a.href=headerPost; box.innerHTML='Post de origen: <a href="'+headerPost+'" target="_blank">'+headerPost+'</a>'; }
-  else { a.style.display='none'; box.innerHTML='<span style="color:#999">Sin post asociado - llegó directo por WhatsApp. Si lo mandas por Excel con post_url, aquí saldrá el link.</span>'; }
-  // agrupar por fecha
+  else { a.style.display='none'; box.innerHTML='<span style="color:#999">Sin post asociado</span>'; }
   let html='', lastDate='';
   msgs.forEach(m=>{
     const t=getTime(m); const d=fmtDate(t);
@@ -48,6 +68,7 @@ async function openChat(phone){
     html+=`<div class="${m.dir==='in'?'in':'out'}">${m.text||''}${postHtml}<div class="time">${fmtTime(t)}</div></div>`;
   });
   document.getElementById('msgs').innerHTML=html||'<p style="color:#888">Sin mensajes</p>';
+  document.getElementById('msgs').scrollTop=document.getElementById('msgs').scrollHeight;
 }
 async function send(){
   const text=document.getElementById('input').value; if(!text||!current) return;
