@@ -47,7 +47,7 @@ module.exports = async function handler(req,res){
   try{
     if(req.method==='DELETE'){
       const {phone,index}=req.query; if(!phone) return res.json({ok:false});
-      if(index!==undefined){ const list=await kv.lrange(`chat:${phone}`,0,-1); const idx=parseInt(index); if(list[idx]) await kv.lset(`chat:${phone}`,idx,JSON.stringify({...safeParse(list[idx]),deleted:true,text:'🗑️ Mensaje eliminado'})); return res.json({ok:true}); }
+      if(index!==undefined){ const list=await kv.lrange(`chat:${phone}`,0,-1); const idx=parseInt(index); if(list[idx]) await kv.lset(`chat:${phone}`,idx,JSON.stringify({ ...safeParse(list[idx]), deleted:true, text:'🗑️ Mensaje eliminado', file:'', fileName:'', fileType:'', post_url:'', post_title:'' })); return res.json({ok:true}); }
       await kv.del(`chat:${phone}`); await kv.del(`contact:${phone}`); try{await kv.zrem('chats',phone);}catch(e){} return res.json({ok:true});
     }
     if(req.method==='GET'){
