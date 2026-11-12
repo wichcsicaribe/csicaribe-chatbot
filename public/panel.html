@@ -6,22 +6,19 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 #list{width:340px;border-right:1px solid #ddd;overflow:auto;flex-shrink:0}
 #chat{flex:1;display:flex;flex-direction:column;min-width:0}
 #msgs{flex:1;overflow:auto;padding:16px}
-.in{background:#eee;padding:8px 12px;border-radius:12px;margin:6px 0;max-width:80%;word-break:break-word}
-.out{background:#dcf8c6;padding:8px 12px;border-radius:12px;margin:6px 0 6px auto;max-width:80%;text-align:right;word-break:break-word}
-.contact{padding:12px;border-bottom:1px solid #eee;cursor:pointer}
+.in,.out{position:relative;padding:8px 12px;border-radius:12px;margin:6px 0;max-width:80%;word-break:break-word}
+.in{background:#eee}.out{background:#dcf8c6;margin-left:auto;text-align:right}
+.msg-actions{display:none;gap:6px;margin-top:4px}.in:hover .msg-actions,.out:hover .msg-actions{display:flex}
+.msg-actions button{font-size:11px;border:0;background:#fff;padding:4px 8px;border-radius:6px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.contact{padding:12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 .contact b{display:block}.time{font-size:11px;color:#888;margin-top:4px}
 .datesep{text-align:center;margin:14px 0 6px}.datesep span{background:#eef2f7;padding:4px 12px;border-radius:12px;font-size:12px;color:#555}
-#backBtn{display:none}
-/* --- MÓVIL --- */
+#backBtn{display:none}#replyBar{display:none;background:#fff3cd;padding:8px 12px;font-size:13px;border-top:1px solid #eee}
 @media(max-width:768px){
-  body{flex-direction:column}
-  #list{width:100%;border-right:0}
-  #chat{display:none;width:100%}
-  body.chat-open #list{display:none}
-  body.chat-open #chat{display:flex}
+  body{flex-direction:column}#list{width:100%;border-right:0}#chat{display:none;width:100%}
+  body.chat-open #list{display:none}body.chat-open #chat{display:flex}
   #backBtn{display:inline-block;margin-right:8px;padding:6px 10px;border:0;background:#eee;border-radius:8px}
-  .contact{padding:14px}
-  #input{font-size:16px}
+  .msg-actions{display:flex;flex-wrap:wrap}
 }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -37,60 +34,53 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 <div id="bulkStatus" style="font-size:12px;margin-top:6px"></div>
 </div></div>
 <input id="search" placeholder="Buscar..." oninput="loadChats()" style="margin:10px 12px;padding:10px;width:85%;font-size:15px"><div id="contacts">Cargando...</div></div>
-<div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee"><button id="backBtn" onclick="document.body.classList.remove('chat-open')">← Atrás</button><b id="curName">Selecciona un chat</b> <span id="curPhone"></span> <a id="curPost" target="_blank" style="display:none;margin-left:10px">Ver post 🔗</a><div id="curPostBox" style="font-size:12px;margin-top:4px;color:#555;word-break:break-all"></div></div><div id="msgs"><p style="color:#888">Selecciona un chat</p></div>
-<div style="display:flex;padding:12px;gap:8px"><input id="input" style="flex:1;padding:12px;font-size:16px" placeholder="Escribe tu respuesta..."><button onclick="send()" style="padding:12px 18px;background:#25D366;border:0;border-radius:8px;color:#fff;font-size:15px">Enviar</button></div></div>
+<div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px"><button id="backBtn" onclick="goBack()">← Atrás</button><div style="flex:1;min-width:0"><b id="curName">Selecciona un chat</b> <span id="curPhone"></span></div><button onclick="deleteChat()" title="Eliminar chat" style="border:0;background:#fee;padding:8px 10px;border-radius:8px;cursor:pointer">🗑️</button></div>
+<div id="msgs"><p style="color:#888">Selecciona un chat</p></div>
+<div id="replyBar"><span id="replyText"></span> <button onclick="cancelReply()" style="border:0;background:none;cursor:pointer">✕</button></div>
+<div style="display:flex;padding:12px;gap:8px;align-items:center"><label style="cursor:pointer;font-size:22px">📎<input type="file" id="fileInput" style="display:none" onchange="attachFile(event)"></label><span id="fileName" style="font-size:12px;max-width:80px;overflow:hidden"></span><input id="input" style="flex:1;padding:12px;font-size:16px" placeholder="Escribe tu respuesta..."><button onclick="send()" style="padding:12px 18px;background:#25D366;border:0;border-radius:8px;color:#fff;font-size:15px">Enviar</button></div></div>
 <script>
-let current=null, allChats=[], bulkList=[];
+let current=null, allChats=[], bulkList=[], replyTo=null, replyTxt='', pendingFile=null, pendingFileName='', pendingFileType='', currentMsgs=[];
 function fmtTime(t){ if(!t) return ''; const d=new Date(typeof t==='number'?t:t); if(isNaN(d)) return ''; return d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}); }
 function fmtDate(t){ if(!t) return ''; const d=new Date(typeof t==='number'?t:t); if(isNaN(d)) return ''; return d.toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'}); }
 function getTime(m){ return m.time||m.timestamp||m.createdAt||m.created_at||m.date||m.ts||m.lastTime||null; }
+function goBack(){ current=null; replyTo=null; cancelReply(); document.body.classList.remove('chat-open'); loadChats(); }
 async function loadChats(){
   const r=await fetch('/api/messages'); allChats=await r.json();
   const q=(document.getElementById('search').value||'').toLowerCase();
   const chats=allChats.filter(c=>((c.name||'')+' '+(c.phone||'')).toLowerCase().includes(q));
-  document.getElementById('contacts').innerHTML=chats.map(c=>`<div class="contact" onclick="openChat('${c.phone}')"><b>${c.name||c.phone||'Sin nombre'}</b><span>${c.phone||''}</span><br><small>${c.lastMessage||''}</small><br><small style="color:#888">${fmtTime(getTime(c))} ${c.post_url?'🔗 Post':''}</small></div>`).join('');
+  document.getElementById('contacts').innerHTML=chats.map(c=>`<div class="contact" onclick="openChat('${c.phone}')"><div><b>${c.name||c.phone||'Sin nombre'}</b><span>${c.phone||''}</span><br><small>${(c.lastMessage||'').slice(0,60)}</small><br><small style="color:#888">${fmtTime(getTime(c))}</small></div><button onclick="event.stopPropagation();deleteChat('${c.phone}')" style="border:0;background:#fee;padding:8px;border-radius:8px;cursor:pointer">🗑️</button></div>`).join('');
 }
 async function openChat(phone){
   current=phone; document.body.classList.add('chat-open');
   const c=allChats.find(x=>String(x.phone)==String(phone));
-  let headerPost=c?.post_url||'';
   if(c){ document.getElementById('curName').innerText=c.name||c.phone; document.getElementById('curPhone').innerText=c.phone; }
-  const r=await fetch('/api/messages?phone='+phone); const msgs=await r.json();
-  if(!headerPost){ const withPost=msgs.find(m=>m.post_url); if(withPost) headerPost=withPost.post_url; }
-  const a=document.getElementById('curPost'); const box=document.getElementById('curPostBox');
-  if(headerPost){ a.style.display='inline'; a.href=headerPost; box.innerHTML='Post de origen: <a href="'+headerPost+'" target="_blank">'+headerPost+'</a>'; }
-  else { a.style.display='none'; box.innerHTML='<span style="color:#999">Sin post asociado</span>'; }
+  const r=await fetch('/api/messages?phone='+phone); const msgs=await r.json(); currentMsgs=msgs;
   let html='', lastDate='';
-  msgs.forEach(m=>{
+  msgs.forEach((m,i)=>{
     const t=getTime(m); const d=fmtDate(t);
     if(d && d!==lastDate){ html+=`<div class="datesep"><span>${d}</span></div>`; lastDate=d; }
     const postHtml=m.post_url?`<br><a href="${m.post_url}" target="_blank" style="font-size:11px">🔗 Ver post: ${m.post_url}</a>`:'';
-    html+=`<div class="${m.dir==='in'?'in':'out'}">${m.text||''}${postHtml}<div class="time">${fmtTime(t)}</div></div>`;
+    const fileHtml=m.file?`<br><a href="${m.file}" download="${m.fileName||'archivo'}" target="_blank">📎 ${m.fileName||'Ver archivo'}</a>`:'';
+    const safeText=(m.text||'').replace(/'/g,"\\'");
+    html+=`<div class="${m.dir==='in'?'in':'out'}">${m.text||''}${postHtml}${fileHtml}<div class="time">${fmtTime(t)}</div><div class="msg-actions"><button onclick="doReply(${i},'${safeText}')">↩️ Responder</button><button onclick="doShare('${safeText}')">↗️ Compartir</button><button onclick="deleteMsg(${i})">🗑️ Eliminar</button></div></div>`;
   });
   document.getElementById('msgs').innerHTML=html||'<p style="color:#888">Sin mensajes</p>';
   document.getElementById('msgs').scrollTop=document.getElementById('msgs').scrollHeight;
 }
+function doReply(i,txt){ replyTo=i; replyTxt=txt; document.getElementById('replyText').innerText='Respondiendo a: '+txt.slice(0,60); document.getElementById('replyBar').style.display='block'; document.getElementById('input').focus(); }
+function cancelReply(){ replyTo=null; replyTxt=''; document.getElementById('replyBar').style.display='none'; }
+async function doShare(txt){ if(navigator.share){ try{ await navigator.share({text:txt}); return; }catch(e){} } await navigator.clipboard.writeText(txt); alert('Copiado para compartir'); }
+async function deleteMsg(i){ if(!confirm('¿Eliminar este mensaje?')) return; await fetch('/api/messages?phone='+current+'&index='+i,{method:'DELETE'}); openChat(current); }
+async function deleteChat(phone){ phone=phone||current; if(!phone) return; if(!confirm('¿Eliminar todo el chat de '+phone+'?')) return; await fetch('/api/messages?phone='+phone,{method:'DELETE'}); if(phone===current) goBack(); else loadChats(); }
+function attachFile(e){ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ pendingFile=rd.result; pendingFileName=f.name; pendingFileType=f.type; document.getElementById('fileName').innerText=f.name; }; rd.readAsDataURL(f); }
 async function send(){
-  const text=document.getElementById('input').value; if(!text||!current) return;
-  await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:current,text})});
-  document.getElementById('input').value=''; openChat(current);
+  const text=document.getElementById('input').value; if(!text && !pendingFile) return; if(!current) return;
+  await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:current,text,replyTo,replyText:replyTxt,file:pendingFile,fileName:pendingFileName,fileType:pendingFileType})});
+  document.getElementById('input').value=''; document.getElementById('fileName').innerText=''; pendingFile=null; cancelReply(); openChat(current);
 }
-async function readExcel(e){
-  const f=e.target.files[0]; const data=await f.arrayBuffer(); const wb=XLSX.read(data); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws);
-  bulkList=rows.map(r=>({phone:String(r.phone||r.telefono||r.numero||r.celular||Object.values(r)[0]||'').replace(/\D/g,''), name:r.nombre||r.name||r.Nombre||'', post_url:r.post_url||r.link||r.post||''}));
-  document.getElementById('bulkBox').style.display='block';
-  document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos. Primero: '+(bulkList[0]?.name||'')+' '+(bulkList[0]?.phone||'');
-}
-async function sendBulk(){
-  const tpl=document.getElementById('bulkMsg').value; if(!tpl||!bulkList.length) return alert('Sube Excel y escribe mensaje');
-  for(let i=0;i<bulkList.length;i++){
-    const c=bulkList[i]; const text=tpl.replaceAll('{nombre}',c.name||'').replaceAll('{phone}',c.phone).replaceAll('{post}',c.post_url||'').replaceAll('{post_url}',c.post_url||'');
-    document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name;
-    await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:c.phone,text,post_url:c.post_url})});
-    await new Promise(r=>setTimeout(r,2000));
-  }
-  document.getElementById('bulkStatus').innerText='✅ Listo! Se enviaron '+bulkList.length;
-  loadChats();
-}
-loadChats(); setInterval(()=>{loadChats(); if(current) openChat(current)}, 5000);
+async function readExcel(e){ const f=e.target.files[0]; const data=await f.arrayBuffer(); const wb=XLSX.read(data); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws); bulkList=rows.map(r=>({phone:String(r.phone||r.telefono||r.numero||r.celular||Object.values(r)[0]||'').replace(/\D/g,''), name:r.nombre||r.name||r.Nombre||'', post_url:r.post_url||r.link||r.post||''})); document.getElementById('bulkBox').style.display='block'; document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos.'; }
+async function sendBulk(){ const tpl=document.getElementById('bulkMsg').value; if(!tpl||!bulkList.length) return alert('Sube Excel y escribe mensaje'); for(let i=0;i<bulkList.length;i++){ const c=bulkList[i]; const text=tpl.replaceAll('{nombre}',c.name||'').replaceAll('{phone}',c.phone).replaceAll('{post}',c.post_url||'').replaceAll('{post_url}',c.post_url||''); document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name; await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:c.phone,text,post_url:c.post_url})}); await new Promise(r=>setTimeout(r,2000)); } document.getElementById('bulkStatus').innerText='✅ Listo!'; loadChats(); }
+loadChats();
+// CORREGIDO: solo actualiza el chat si estás dentro de él, si le diste Atrás ya no vuelve
+setInterval(()=>{ if(document.body.classList.contains('chat-open') && current){ openChat(current); } else { loadChats(); } }, 5000);
 </script></body></html>
