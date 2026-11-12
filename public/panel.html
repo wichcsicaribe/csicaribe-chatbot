@@ -60,7 +60,7 @@ async function openChat(phone){
     const t=getTime(m); const d=fmtDate(t);
     if(d && d!==lastDate){ html+=`<div class="datesep"><span>${d}</span></div>`; lastDate=d; }
     const postHtml=m.post_url?`<br><a href="${m.post_url}" target="_blank" style="font-size:11px">🔗 Ver post: ${m.post_url}</a>`:'';
-    const fileHtml=m.file?`<br><a href="${m.file}" download="${m.fileName||'archivo'}" target="_blank">📎 ${m.fileName||'Ver archivo'}</a>`:'';
+    let fileHtml=''; if(m.file){ if(m.file.startsWith('data:image')) fileHtml=`<br><img src="${m.file}" style="max-width:220px;border-radius:8px;margin-top:6px;display:block">`; else if(m.file.startsWith('data:video')) fileHtml=`<br><video controls src="${m.file}" style="max-width:220px;border-radius:8px;margin-top:6px"></video>`; else if(m.file.startsWith('data:audio')) fileHtml=`<br><audio controls src="${m.file}" style="max-width:220px"></audio>`; else fileHtml=`<br><a href="${m.file}" download="${m.fileName||'archivo'}" target="_blank">📎 ${m.fileName||'Ver archivo'}</a>`; } 
     const safeText=(m.text||'').replace(/'/g,"\\'");
     html+=`<div class="${m.dir==='in'?'in':'out'}">${m.text||''}${postHtml}${fileHtml}<div class="time">${fmtTime(t)}</div><div class="msg-actions"><button onclick="doReply(${i},'${safeText}')">↩️ Responder</button><button onclick="doShare('${safeText}')">↗️ Compartir</button><button onclick="deleteMsg(${i})">🗑️ Eliminar</button></div></div>`;
   });
