@@ -13,15 +13,7 @@ async function sendWhatsApp(to, body){
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID;
   return fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body } }) });
 }
-
-// === BOT POR REFERRAL - MÓDULO II ===
-const MODULO_II_LINKS = [
-  'fb.me/7N25MDTVm',
-  'fb.me/6FNTTNJqM',
-  'fb.me/7FAESYweo',
-  // Si sacas un anuncio nuevo del Módulo II, solo agrega el link aquí: 'fb.me/XXXXXXX',
-];
-
+// === BOT POR REFERRAL - SIN DEPENDER DEL LINK ===
 const MODULO_II_REPLY = `¡Muchas gracias por tu interés en el curso! 🏛️
 En el siguiente enlace podrás revisar el brochure completo con el temario, fechas, precios y detalles de inscripción:
 🔗 https://drive.google.com/file/d/1izd3TYuSvvbIcZ6XzjEbiIEiWXn5gD7Q/view?usp=sharing
@@ -32,13 +24,23 @@ En el siguiente enlace podrás revisar el brochure completo del Módulo I:
 🔗 https://csicaribe.com/pages/dinamicaestructural2026
 Si tienes alguna consulta adicional o deseas confirmar tu vacante, quedo atento para ayudarte. 🤝`;
 
-function getReplyByReferral(post_url, post_title){
-  const url = (post_url||'').toLowerCase();
+function getReplyByReferral(post_url, post_title, text){
   const title = (post_title||'').toLowerCase();
-  const all = url + ' ' + title;
-  if(MODULO_II_LINKS.some(link => url.includes(link.toLowerCase()))) return MODULO_II_REPLY;
-  if(all.includes('módulo ii') || all.includes('modulo ii') || all.includes('módulo 2') || all.includes('modulo 2') || all.includes('n grados') || all.includes('(n) grados') || all.includes('grados de libertad')) return MODULO_II_REPLY;
-  if(all.includes('módulo i') || all.includes('modulo i') || all.includes('1-grado') || all.includes('1 grado')) return MODULO_I_REPLY;
+  const msg = (text||'').toLowerCase();
+  const hasReferral = !!(post_url && post_url.trim() !== '');
+
+  // 1. Si el título del anuncio dice Módulo I o Módulo II, eso manda (es lo más fiable)
+  if(title.includes('módulo i') || title.includes('modulo i')) return MODULO_I_REPLY;
+  if(title.includes('módulo ii') || title.includes('modulo ii') || title.includes('módulo 2') || title.includes('modulo 2') || title.includes('n grados') || title.includes('grados de libertad')) return MODULO_II_REPLY;
+
+  // 2. Si escribe directo y pide Módulo II / dinámica
+  if(msg.includes('módulo ii') || msg.includes('modulo ii') || msg.includes('módulo 2') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad') || (msg.includes('dinamica') && msg.includes('modulo')) || (msg.includes('dinámica') && msg.includes('módulo'))) return MODULO_II_REPLY;
+
+  // 3. Si viene de CUALQUIER anuncio (tiene referral) y ahorita todos tus anuncios son Módulo II -> responde Módulo II
+  // Ya no importa si el link es fb.me/XXXX distinto cada vez
+  if(hasReferral) return MODULO_II_REPLY;
+
+  // 4. Si no es nada de eso, no responde automático, lo respondes tú
   return null;
 }
 
@@ -97,7 +99,7 @@ module.exports = async function handler(req, res) {
         await logToSheet({ date: new Date().toLocaleString('es-PE'), name, from: phone, text, dir: 'in', fileName, post_url: post_url||'', post_title: post_title||'' });
 
         // === RESPUESTA AUTOMÁTICA POR REFERRAL ===
-        const autoReply = getReplyByReferral(post_url, post_title);
+        const autoReply = getReplyByReferral(post_url, post_title, text);
         if(autoReply){
           // 1. Guardar respuesta del bot en el panel para que la veas
           await kv.rpush(`chat:${phone}`, JSON.stringify({ from: phone, name: 'CSI CARIBE+ (Bot)', text: autoReply, dir: 'out', time: Date.now(), post_url: '', post_title: '', file: '', fileName: '', fileType: '' }));
