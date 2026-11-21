@@ -13,7 +13,8 @@ async function sendWhatsApp(to, body){
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID;
   return fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body } }) });
 }
-// === BOT POR REFERRAL - SIN DEPENDER DEL LINK ===
+
+// === BOT POR CURSO - POR TÍTULO DEL ANUNCIO, NO POR LINK ===
 const MODULO_II_REPLY = `¡Muchas gracias por tu interés en el curso! 🏛️
 En el siguiente enlace podrás revisar el brochure completo con el temario, fechas, precios y detalles de inscripción:
 🔗 https://drive.google.com/file/d/1izd3TYuSvvbIcZ6XzjEbiIEiWXn5gD7Q/view?usp=sharing
@@ -24,23 +25,34 @@ En el siguiente enlace podrás revisar el brochure completo del Módulo I:
 🔗 https://csicaribe.com/pages/dinamicaestructural2026
 Si tienes alguna consulta adicional o deseas confirmar tu vacante, quedo atento para ayudarte. 🤝`;
 
+const GENERIC_REPLY = `¡Muchas gracias por tu interés! 🏛️
+¿Me confirma en qué curso está interesado? Así le comparto el brochure correcto con temario, fechas y precios.
+
+1️⃣ Dinámica Estructural Módulo I
+2️⃣ Dinámica Estructural Módulo II
+3️⃣ Otro curso
+
+Quedo atento para ayudarle. 🤝`;
+
 function getReplyByReferral(post_url, post_title, text){
   const title = (post_title||'').toLowerCase();
   const msg = (text||'').toLowerCase();
-  const hasReferral = !!(post_url && post_url.trim() !== '');
 
-  // 1. Si el título del anuncio dice Módulo I o Módulo II, eso manda (es lo más fiable)
+  // 1. MÓDULO II - si el título del anuncio O lo que escribe dice Módulo II / N Grados
+  if(title.includes('módulo ii') || title.includes('modulo ii') || title.includes('módulo 2') || title.includes('modulo 2') || title.includes('n grados') || title.includes('grados de libertad') || title.includes('(n) grados')) return MODULO_II_REPLY;
+  if(msg.includes('módulo ii') || msg.includes('modulo ii') || msg.includes('módulo 2') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad')) return MODULO_II_REPLY;
+
+  // 2. MÓDULO I - si dice Módulo I
   if(title.includes('módulo i') || title.includes('modulo i')) return MODULO_I_REPLY;
-  if(title.includes('módulo ii') || title.includes('modulo ii') || title.includes('módulo 2') || title.includes('modulo 2') || title.includes('n grados') || title.includes('grados de libertad')) return MODULO_II_REPLY;
+  if(msg.includes('módulo i') || msg.includes('modulo i')) return MODULO_I_REPLY;
 
-  // 2. Si escribe directo y pide Módulo II / dinámica
-  if(msg.includes('módulo ii') || msg.includes('modulo ii') || msg.includes('módulo 2') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad') || (msg.includes('dinamica') && msg.includes('modulo')) || (msg.includes('dinámica') && msg.includes('módulo'))) return MODULO_II_REPLY;
+  // 3. OTRO CURSO - si viene de un anuncio pero NO es Módulo I ni II, NO le mandes el de Módulo II
+  // Le mandas el genérico para que te diga qué curso quiere
+  const hasReferral = !!(post_url && post_url.trim() !== '');
+  if(hasReferral) return GENERIC_REPLY;
 
-  // 3. Si viene de CUALQUIER anuncio (tiene referral) y ahorita todos tus anuncios son Módulo II -> responde Módulo II
-  // Ya no importa si el link es fb.me/XXXX distinto cada vez
-  if(hasReferral) return MODULO_II_REPLY;
-
-  // 4. Si no es nada de eso, no responde automático, lo respondes tú
+  // 4. Si escribe directo y solo dice "hola" / "info" sin decir qué curso, no responde automático
+  // Lo respondes tú desde el panel para no mandarle un brochure equivocado
   return null;
 }
 
