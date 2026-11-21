@@ -40,15 +40,31 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 <div style="display:flex;padding:12px;gap:8px;align-items:center"><label style="cursor:pointer;font-size:22px">📎<input type="file" id="fileInput" style="display:none" onchange="attachFile(event)"></label><span id="fileName" style="font-size:12px;max-width:80px;overflow:hidden"></span><input id="input" style="flex:1;padding:12px;font-size:16px" placeholder="Escribe tu respuesta..."><button onclick="send()" style="padding:12px 18px;background:#25D366;border:0;border-radius:8px;color:#fff;font-size:15px">Enviar</button></div></div>
 <script>
 let current=null, allChats=[], bulkList=[], replyTo=null, replyTxt='', pendingFile=null, pendingFileName='', pendingFileType='', currentMsgs=[];
+
+// === CORREGIDO: convierte cualquier cosa a texto sin romperse ===
+function safeStr(v){
+  if(v==null) return '';
+  if(typeof v==='string') return v;
+  if(typeof v==='number') return String(v);
+  if(typeof v==='object'){
+    if(v.text) return String(v.text);
+    if(v.body) return String(v.body);
+    if(v.message) return String(v.message);
+    return '';
+  }
+  return String(v);
+}
 function fmtTime(t){ if(!t) return ''; const d=new Date(typeof t==='number'?t:t); if(isNaN(d)) return ''; return d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}); }
 function fmtDate(t){ if(!t) return ''; const d=new Date(typeof t==='number'?t:t); if(isNaN(d)) return ''; return d.toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'}); }
 function getTime(m){ return m.time||m.timestamp||m.createdAt||m.created_at||m.date||m.ts||m.lastTime||null; }
 function goBack(){ current=null; replyTo=null; cancelReply(); document.body.classList.remove('chat-open'); loadChats(); }
 async function loadChats(){
-  const r=await fetch('/api/messages'); allChats=await r.json();
-  const q=(document.getElementById('search').value||'').toLowerCase();
-  const chats=allChats.filter(c=>((c.name||'')+' '+(c.phone||'')).toLowerCase().includes(q));
-  document.getElementById('contacts').innerHTML=chats.map(c=>`<div class="contact" onclick="openChat('${c.phone}')"><div><b>${c.name||c.phone||'Sin nombre'}</b><span>${c.phone||''}</span><br><small>${(c.lastMessage||'').slice(0,60)}</small><br><small style="color:#888">${fmtTime(getTime(c))}</small></div><button onclick="event.stopPropagation();deleteChat('${c.phone}')" style="border:0;background:#fee;padding:8px;border-radius:8px;cursor:pointer">🗑️</button></div>`).join('');
+  try{
+    const r=await fetch('/api/messages'); allChats=await r.json();
+    const q=(document.getElementById('search').value||'').toLowerCase();
+    const chats=allChats.filter(c=>((c.name||'')+' '+(c.phone||'')).toLowerCase().includes(q));
+    document.getElementById('contacts').innerHTML=chats.map(c=>`<div class="contact" onclick="openChat('${c.phone}')"><div><b>${c.name||c.phone||'Sin nombre'}</b><span>${c.phone||''}</span><br><small>${safeStr(c.lastMessage).slice(0,60)}</small><br><small style="color:#888">${fmtTime(getTime(c))}</small></div><button onclick="event.stopPropagation();deleteChat('${c.phone}')" style="border:0;background:#fee;padding:8px;border-radius:8px;cursor:pointer">🗑️</button></div>`).join('') || '<p style="padding:12px;color:#888">Sin chats</p>';
+  }catch(e){ document.getElementById('contacts').innerHTML='<p style="padding:12px;color:red">Error cargando: '+e.message+'</p>'; }
 }
 async function openChat(phone){
   current=phone; document.body.classList.add('chat-open');
@@ -60,9 +76,10 @@ async function openChat(phone){
     const t=getTime(m); const d=fmtDate(t);
     if(d && d!==lastDate){ html+=`<div class="datesep"><span>${d}</span></div>`; lastDate=d; }
     const postHtml=(m.deleted?'':m.post_url?`<br><a href="${m.post_url}" target="_blank" style="font-size:11px">🔗 Ver post: ${m.post_url}</a>`:'');
-    let fileHtml=''; if(m.deleted){ fileHtml=''; } else if(m.file){ if(m.file.startsWith('data:image')) fileHtml=`<br><img src="${m.file}" style="max-width:220px;border-radius:8px;margin-top:6px;display:block">`; else if(m.file.startsWith('data:video')) fileHtml=`<br><video controls src="${m.file}" style="max-width:220px;border-radius:8px;margin-top:6px"></video>`; else if(m.file.startsWith('data:audio')) fileHtml=`<br><audio controls src="${m.file}" style="max-width:220px"></audio>`; else fileHtml=`<br><a href="${m.file}" download="${m.fileName||'archivo'}" target="_blank">📎 ${m.fileName||'Ver archivo'}</a>`; } 
-    const safeText=(m.text||'').replace(/'/g,"\\'");
-    html+=`<div class="${m.dir==='in'?'in':'out'}">${m.text||''}${postHtml}${fileHtml}<div class="time">${fmtTime(t)}</div><div class="msg-actions"><button onclick="doReply(${i},'${safeText}')">↩️ Responder</button><button onclick="doShare('${safeText}')">↗️ Compartir</button><button onclick="deleteMsg(${i})">🗑️ Eliminar</button></div></div>`;
+    let fileHtml=''; if(m.deleted){ fileHtml=''; } else if(m.file){ if(typeof m.file==='string' && m.file.startsWith('data:image')) fileHtml=`<br><img src="${m.file}" style="max-width:220px;border-radius:8px;margin-top:6px;display:block">`; else if(typeof m.file==='string' && m.file.startsWith('data:video')) fileHtml=`<br><video controls src="${m.file}" style="max-width:220px;border-radius:8px;margin-top:6px"></video>`; else if(typeof m.file==='string' && m.file.startsWith('data:audio')) fileHtml=`<br><audio controls src="${m.file}" style="max-width:220px"></audio>`; else fileHtml=`<br><a href="${m.file}" download="${m.fileName||'archivo'}" target="_blank">📎 ${m.fileName||'Ver archivo'}</a>`; } 
+    const txt = safeStr(m.text);
+    const safeText=txt.replace(/'/g,"\\'");
+    html+=`<div class="${m.dir==='in'?'in':'out'}">${txt}${postHtml}${fileHtml}<div class="time">${fmtTime(t)}</div><div class="msg-actions"><button onclick="doReply(${i},'${safeText}')">↩️ Responder</button><button onclick="doShare('${safeText}')">↗️ Compartir</button><button onclick="deleteMsg(${i})">🗑️ Eliminar</button></div></div>`;
   });
   document.getElementById('msgs').innerHTML=html||'<p style="color:#888">Sin mensajes</p>';
   document.getElementById('msgs').scrollTop=document.getElementById('msgs').scrollHeight;
@@ -81,6 +98,5 @@ async function send(){
 async function readExcel(e){ const f=e.target.files[0]; const data=await f.arrayBuffer(); const wb=XLSX.read(data); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws); bulkList=rows.map(r=>({phone:String(r.phone||r.telefono||r.numero||r.celular||Object.values(r)[0]||'').replace(/\D/g,''), name:r.nombre||r.name||r.Nombre||'', post_url:r.post_url||r.link||r.post||''})); document.getElementById('bulkBox').style.display='block'; document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos.'; }
 async function sendBulk(){ const tpl=document.getElementById('bulkMsg').value; if(!tpl||!bulkList.length) return alert('Sube Excel y escribe mensaje'); for(let i=0;i<bulkList.length;i++){ const c=bulkList[i]; const text=tpl.replaceAll('{nombre}',c.name||'').replaceAll('{phone}',c.phone).replaceAll('{post}',c.post_url||'').replaceAll('{post_url}',c.post_url||''); document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name; await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:c.phone,text,post_url:c.post_url})}); await new Promise(r=>setTimeout(r,2000)); } document.getElementById('bulkStatus').innerText='✅ Listo!'; loadChats(); }
 loadChats();
-// CORREGIDO: solo actualiza el chat si estás dentro de él, si le diste Atrás ya no vuelve
 setInterval(()=>{ if(document.body.classList.contains('chat-open') && current){ openChat(current); } else { loadChats(); } }, 5000);
 </script></body></html>
