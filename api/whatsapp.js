@@ -14,7 +14,7 @@ async function sendWhatsApp(to, body){
   return fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body } }) });
 }
 
-// === BOT POR CURSO - POR TÍTULO DEL ANUNCIO, NO POR LINK ===
+// === BOT POR CURSO - CON MEMORIA DE OPCIÓN 1, 2, 3 ===
 const MODULO_II_REPLY = `¡Muchas gracias por tu interés en el curso! 🏛️
 En el siguiente enlace podrás revisar el brochure completo con el temario, fechas, precios y detalles de inscripción:
 🔗 https://drive.google.com/file/d/1izd3TYuSvvbIcZ6XzjEbiIEiWXn5gD7Q/view?usp=sharing
@@ -28,31 +28,35 @@ Si tienes alguna consulta adicional o deseas confirmar tu vacante, quedo atento 
 const GENERIC_REPLY = `¡Muchas gracias por tu interés! 🏛️
 ¿Me confirma en qué curso está interesado? Así le comparto el brochure correcto con temario, fechas y precios.
 
-1️⃣ Dinámica Estructural Módulo I
-2️⃣ Dinámica Estructural Módulo II
-3️⃣ Otro curso
+Escriba el número:
+1 - Dinámica Estructural Módulo I
+2 - Dinámica Estructural Módulo II
+3 - Otro curso
 
 Quedo atento para ayudarle. 🤝`;
 
 function getReplyByReferral(post_url, post_title, text){
   const title = (post_title||'').toLowerCase();
-  const msg = (text||'').toLowerCase();
+  const msg = (text||'').toLowerCase().trim();
 
-  // 1. MÓDULO II - si el título del anuncio O lo que escribe dice Módulo II / N Grados
-  if(title.includes('módulo ii') || title.includes('modulo ii') || title.includes('módulo 2') || title.includes('modulo 2') || title.includes('n grados') || title.includes('grados de libertad') || title.includes('(n) grados')) return MODULO_II_REPLY;
+  // 0. Si responde solo "1", "2", "3" a la pregunta anterior -> manda ese brochure
+  // El bot guarda en Redis que está esperando opción, eso lo manejamos abajo con awaiting
+  if(msg === '1' || msg === '1️⃣' || msg === '1.' || msg.includes('opcion 1') || msg.includes('opción 1')) return MODULO_I_REPLY;
+  if(msg === '2' || msg === '2️⃣' || msg === '2.' || msg.includes('opcion 2') || msg.includes('opción 2')) return MODULO_II_REPLY;
+  if(msg === '3' || msg === '3️⃣' || msg === '3.') return `¡Perfecto! ¿Me indica qué curso le interesa? Así le comparto el brochure correcto. 🤝`;
+
+  // 1. MÓDULO II
+  if(title.includes('módulo ii') || title.includes('modulo ii') || title.includes('módulo 2') || title.includes('modulo 2') || title.includes('n grados') || title.includes('grados de libertad')) return MODULO_II_REPLY;
   if(msg.includes('módulo ii') || msg.includes('modulo ii') || msg.includes('módulo 2') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad')) return MODULO_II_REPLY;
 
-  // 2. MÓDULO I - si dice Módulo I
+  // 2. MÓDULO I
   if(title.includes('módulo i') || title.includes('modulo i')) return MODULO_I_REPLY;
   if(msg.includes('módulo i') || msg.includes('modulo i')) return MODULO_I_REPLY;
 
-  // 3. OTRO CURSO - si viene de un anuncio pero NO es Módulo I ni II, NO le mandes el de Módulo II
-  // Le mandas el genérico para que te diga qué curso quiere
+  // 3. OTRO CURSO - viene de anuncio pero no es I ni II
   const hasReferral = !!(post_url && post_url.trim() !== '');
   if(hasReferral) return GENERIC_REPLY;
 
-  // 4. Si escribe directo y solo dice "hola" / "info" sin decir qué curso, no responde automático
-  // Lo respondes tú desde el panel para no mandarle un brochure equivocado
   return null;
 }
 
