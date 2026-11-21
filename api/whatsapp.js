@@ -1,18 +1,56 @@
 const { Redis } = require("@upstash/redis");
 const kv = new Redis({ url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL, token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN });
 
+// === GUARDAR EN TU GOOGLE SHEET VIEJO ===
+async function logToSheet({date, name, from, text, dir, fileName, post_url, post_title}){
+  const url = process.env.GOOGLE_SHEET_URL;
+  if(!url) return;
+  try{ await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({date, name, from, text, dir, fileName, post_url, post_title}) }); }catch(e){ console.log('Sheet log fail', e); }
+}
+
+// === MANDAR WHATSAPP ===
+async function sendWhatsApp(to, body){
+  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID;
+  return fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body } }) });
+}
+
+// === BOT POR REFERRAL - MÓDULO II ===
+const MODULO_II_LINKS = [
+  'fb.me/7N25MDTVm',
+  'fb.me/6FNTTNJqM',
+  'fb.me/7FAESYweo',
+  // Si sacas un anuncio nuevo del Módulo II, solo agrega el link aquí: 'fb.me/XXXXXXX',
+];
+
+const MODULO_II_REPLY = `¡Muchas gracias por tu interés en el curso! 🏛️
+En el siguiente enlace podrás revisar el brochure completo con el temario, fechas, precios y detalles de inscripción:
+🔗 https://drive.google.com/file/d/1izd3TYuSvvbIcZ6XzjEbiIEiWXn5gD7Q/view?usp=sharing
+Si tienes alguna consulta adicional o deseas confirmar tu vacante, quedo atento para ayudarte. 🤝`;
+
+const MODULO_I_REPLY = `¡Muchas gracias por tu interés en el curso! 🏛️
+En el siguiente enlace podrás revisar el brochure completo del Módulo I:
+🔗 https://csicaribe.com/pages/dinamicaestructural2026
+Si tienes alguna consulta adicional o deseas confirmar tu vacante, quedo atento para ayudarte. 🤝`;
+
+function getReplyByReferral(post_url, post_title){
+  const url = (post_url||'').toLowerCase();
+  const title = (post_title||'').toLowerCase();
+  const all = url + ' ' + title;
+  if(MODULO_II_LINKS.some(link => url.includes(link.toLowerCase()))) return MODULO_II_REPLY;
+  if(all.includes('módulo ii') || all.includes('modulo ii') || all.includes('módulo 2') || all.includes('modulo 2') || all.includes('n grados') || all.includes('(n) grados') || all.includes('grados de libertad')) return MODULO_II_REPLY;
+  if(all.includes('módulo i') || all.includes('modulo i') || all.includes('1-grado') || all.includes('1 grado')) return MODULO_I_REPLY;
+  return null;
+}
+
 // Descargar foto/video/documento de Meta y convertirlo a base64 para guardarlo en el panel
 async function downloadMedia(mediaId) {
   const token = process.env.WHATSAPP_TOKEN;
-  // 1. Pedir la URL temporal del archivo
   const r1 = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, { headers: { Authorization: `Bearer ${token}` } });
   const j1 = await r1.json();
   if (!j1.url) return null;
-  // 2. Descargar el archivo
   const r2 = await fetch(j1.url, { headers: { Authorization: `Bearer ${token}` } });
   const buf = Buffer.from(await r2.arrayBuffer());
   const mime = j1.mime_type || 'image/jpeg';
-  // Si es muy grande, no lo guardamos como base64 para no saturar Redis
   if (buf.length > 4 * 1024 * 1024) return { tooBig: true, mime, url: j1.url };
   return { dataUrl: `data:${mime};base64,${buf.toString('base64')}`, mime, fileName: j1.filename || 'archivo' };
 }
@@ -34,7 +72,6 @@ module.exports = async function handler(req, res) {
         const phone = m.from;
         const name = contacts.find(c => c.wa_id === phone)?.profile?.name || phone;
 
-        // *** AQUÍ ESTÁ EL ARREGLO: leer texto, foto, video, documento, audio ***
         let text = '';
         let file = ''; let fileName = ''; let fileType = '';
         if (m.type === 'text') text = m.text?.body || '';
@@ -55,6 +92,20 @@ module.exports = async function handler(req, res) {
         await kv.zadd('chats', { score: Date.now(), member: phone });
         const existing = await kv.hgetall(`contact:${phone}`) || {};
         await kv.hset(`contact:${phone}`, { phone, name: name || existing.name || phone, lastMessage: text, lastTime: String(Date.now()), post_url: post_url || existing.post_url || '', post_title: post_title || existing.post_title || '' });
+
+        // Guardar mensaje entrante en Google Sheet
+        await logToSheet({ date: new Date().toLocaleString('es-PE'), name, from: phone, text, dir: 'in', fileName, post_url: post_url||'', post_title: post_title||'' });
+
+        // === RESPUESTA AUTOMÁTICA POR REFERRAL ===
+        const autoReply = getReplyByReferral(post_url, post_title);
+        if(autoReply){
+          // 1. Guardar respuesta del bot en el panel para que la veas
+          await kv.rpush(`chat:${phone}`, JSON.stringify({ from: phone, name: 'CSI CARIBE+ (Bot)', text: autoReply, dir: 'out', time: Date.now(), post_url: '', post_title: '', file: '', fileName: '', fileType: '' }));
+          // 2. Mandar respuesta por WhatsApp al cliente
+          await sendWhatsApp(phone, autoReply).catch(e => console.log('No se pudo mandar auto-reply', e));
+          // 3. Guardar respuesta del bot en Google Sheet
+          await logToSheet({ date: new Date().toLocaleString('es-PE'), name: 'CSI CARIBE+ (Bot)', from: phone, text: autoReply, dir: 'out', fileName: '', post_url: post_url||'', post_title: post_title||'' });
+        }
 
         if (MY_PHONE && phone !== MY_PHONE) {
           const notif = `🔔 Nuevo mensaje en CSI CARIBE+\n\nDe: ${name} (${phone})\nMensaje: ${text}` + (file ? `\n📎 Trae archivo adjunto, míralo en el panel` : '') + (post_url ? `\nPost: ${post_url}` : '');
