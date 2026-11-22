@@ -13,8 +13,8 @@ async function sendWhatsApp(to, body){
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID;
   return fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method: 'POST', headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body } }) });
 }
-
-// === BOT POR CURSO - CON MEMORIA DE OPCIÓN 1, 2, 3 ===
+// ===
+// === BOT - SOLO SE VENDE MÓDULO II POR AHORA ===
 const MODULO_II_REPLY = `¡Muchas gracias por tu interés en el curso! 🏛️
 En el siguiente enlace podrás revisar el brochure completo con el temario, fechas, precios y detalles de inscripción:
 🔗 https://drive.google.com/file/d/1izd3TYuSvvbIcZ6XzjEbiIEiWXn5gD7Q/view?usp=sharing
@@ -38,28 +38,37 @@ Quedo atento para ayudarle. 🤝`;
 function getReplyByReferral(post_url, post_title, text){
   const title = (post_title||'').toLowerCase();
   const msg = (text||'').toLowerCase().trim();
+  const hasReferral = !!(post_url && post_url.trim() !== '');
 
-  // 0. Si responde solo "1", "2", "3" a la pregunta anterior -> manda ese brochure
-  // El bot guarda en Redis que está esperando opción, eso lo manejamos abajo con awaiting
+  // 0. Si ya le mandamos el menú y responde 1, 2, 3
   if(msg === '1' || msg === '1️⃣' || msg === '1.' || msg.includes('opcion 1') || msg.includes('opción 1')) return MODULO_I_REPLY;
   if(msg === '2' || msg === '2️⃣' || msg === '2.' || msg.includes('opcion 2') || msg.includes('opción 2')) return MODULO_II_REPLY;
   if(msg === '3' || msg === '3️⃣' || msg === '3.') return `¡Perfecto! ¿Me indica qué curso le interesa? Así le comparto el brochure correcto. 🤝`;
 
-  // 1. MÓDULO II
-  if(title.includes('módulo ii') || title.includes('modulo ii') || title.includes('módulo 2') || title.includes('modulo 2') || title.includes('n grados') || title.includes('grados de libertad')) return MODULO_II_REPLY;
-  if(msg.includes('módulo ii') || msg.includes('modulo ii') || msg.includes('módulo 2') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad')) return MODULO_II_REPLY;
+  // 1. Si escribe Módulo I explícito, respeta eso (aunque ahorita solo vendes II, por si alguien pregunta por I)
+  if(title.includes('módulo i') || title.includes('modulo i') || msg.includes('módulo i') || msg.includes('modulo i')) return MODULO_I_REPLY;
 
-  // 2. MÓDULO I
-  if(title.includes('módulo i') || title.includes('modulo i')) return MODULO_I_REPLY;
-  if(msg.includes('módulo i') || msg.includes('modulo i')) return MODULO_I_REPLY;
+  // 2. ⭐ SI VIENE DE REFERRAL (de CUALQUIER anuncio) -> ES MÓDULO II DIRECTO
+  // Como ahorita solo vendes Módulo II, no le preguntes, mándale el brochure de una vez
+  // Ya no importa si el link fb.me/XXXX cambia cada vez
+  if(hasReferral) return MODULO_II_REPLY;
 
-  // 3. OTRO CURSO - viene de anuncio pero no es I ni II
-  const hasReferral = !!(post_url && post_url.trim() !== '');
-  if(hasReferral) return GENERIC_REPLY;
+  // 3. ⭐ SI PREGUNTA POR DINÁMICA ESTRUCTURAL -> ES MÓDULO II DIRECTO
+  // Ej: "Quiero info de dinámica", "curso de dinámica estructural", "módulo II", "n grados", "grados de libertad"
+  if(msg.includes('dinamica') || msg.includes('dinámica') || msg.includes('estructural') || msg.includes('módulo ii') || msg.includes('modulo ii') || msg.includes('módulo 2') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad')) return MODULO_II_REPLY;
 
+  // También si el título del anuncio dice dinámica / módulo II
+  if(title.includes('dinamica') || title.includes('dinámica') || title.includes('módulo ii') || title.includes('modulo ii') || title.includes('n grados')) return MODULO_II_REPLY;
+
+  // 4. ⭐ SOLO SI ES PREGUNTA GENÉRICA -> MENÚ DE 3 OPCIONES
+  // Ej: "Hola", "Info", "Quiero info", "Cuánto cuesta", "Buenas", "Precio"
+  // Aquí SÍ no sabemos qué curso quiere, así que le preguntamos
+  if(msg === 'hola' || msg === 'info' || msg === 'informacion' || msg === 'información' || msg.includes('quiero info') || msg.includes('quiero información') || msg.includes('quiero mas info') || msg.includes('quiero más info') || msg.includes('buenas') || msg.includes('cuanto cuesta') || msg.includes('cuánto cuesta') || msg.includes('precio') || msg.includes('costo') || msg === 'hola, quiero info' || msg.length < 15) return GENERIC_REPLY;
+
+  // 5. Si no es nada de eso, no responde automático, lo respondes tú
   return null;
 }
-
+// ===
 // Descargar foto/video/documento de Meta y convertirlo a base64 para guardarlo en el panel
 async function downloadMedia(mediaId) {
   const token = process.env.WHATSAPP_TOKEN;
