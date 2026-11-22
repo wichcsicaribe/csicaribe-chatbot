@@ -63,7 +63,7 @@ function getReplyByReferral(post_url, post_title, text){
   // 4. ⭐ SOLO SI ES PREGUNTA GENÉRICA -> MENÚ DE 3 OPCIONES
   // Ej: "Hola", "Info", "Quiero info", "Cuánto cuesta", "Buenas", "Precio"
   // Aquí SÍ no sabemos qué curso quiere, así que le preguntamos
-  if(msg === 'hola' || msg === 'info' || msg === 'informacion' || msg === 'información' || msg === 'cursos' || msg.includes('quiero info') || msg.includes('que cursos ofrecen') || msg.includes('que cursos tienen') || msg.includes('quiero información') || msg.includes('quiero mas info') || msg.includes('quiero más info') || msg.includes('buenas') || msg.includes('cuanto cuesta') || msg.includes('cuánto cuesta') || msg.includes('precio') || msg.includes('costo') || msg === 'hola, quiero info' || msg.length < 15) return GENERIC_REPLY;
+  if(msg === 'hola' || msg === 'info' || msg === 'informacion' || msg === 'información' || msg === 'cursos ofrecen' || msg === 'cursos tienen' || msg.includes('quiero info') || msg.includes('cursos') || msg.includes('cursos del mes') || msg.includes('quiero información') || msg.includes('quiero mas info') || msg.includes('quiero más info') || msg.includes('buenas') || msg.includes('cuanto cuesta') || msg.includes('cuánto cuesta') || msg.includes('precio') || msg.includes('costo') || msg === 'hola, quiero info' || msg.length < 15) return GENERIC_REPLY;
 
   // 5. Si no es nada de eso, no responde automático, lo respondes tú
   return null;
