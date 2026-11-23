@@ -96,7 +96,26 @@ async function send(){
   document.getElementById('input').value=''; document.getElementById('fileName').innerText=''; pendingFile=null; cancelReply(); openChat(current);
 }
 async function readExcel(e){ const f=e.target.files[0]; const data=await f.arrayBuffer(); const wb=XLSX.read(data); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws); bulkList=rows.map(r=>({phone:String(r.phone||r.telefono||r.numero||r.celular||Object.values(r)[0]||'').replace(/\D/g,''), name:r.nombre||r.name||r.Nombre||'', post_url:r.post_url||r.link||r.post||''})); document.getElementById('bulkBox').style.display='block'; document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos.'; }
-async function sendBulk(){ const tpl=document.getElementById('bulkMsg').value; if(!tpl||!bulkList.length) return alert('Sube Excel y escribe mensaje'); for(let i=0;i<bulkList.length;i++){ const c=bulkList[i]; const text=tpl.replaceAll('{nombre}',c.name||'').replaceAll('{phone}',c.phone).replaceAll('{post}',c.post_url||'').replaceAll('{post_url}',c.post_url||''); document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name; await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:c.phone,text,post_url:c.post_url})}); await new Promise(r=>setTimeout(r,2000)); } document.getElementById('bulkStatus').innerText='✅ Listo!'; loadChats(); }
+async function sendBulk(){
+  if(!bulkList.length) return alert('Sube Excel primero');
+  for(let i=0;i<bulkList.length;i++){
+    const c=bulkList[i];
+    document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name;
+    // ⭐ Manda PLANTILLA aprobada, no texto libre
+    await fetch('/api/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        phone:c.phone,
+        name:c.name || 'amigo',
+        template:true
+      })
+    });
+    await new Promise(r=>setTimeout(r,2000));
+  }
+  document.getElementById('bulkStatus').innerText='✅ Listo!';
+  loadChats();
+}
 loadChats();
 setInterval(()=>{ if(document.body.classList.contains('chat-open') && current){ openChat(current); } else { loadChats(); } }, 5000);
 </script></body></html>
