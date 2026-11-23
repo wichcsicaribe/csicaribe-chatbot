@@ -29,7 +29,6 @@ async function sendWhatsApp(to, text, file, fileName, fileType){
     else if(mime.startsWith('video/')) type='video';
     else if(mime.startsWith('audio/')) type='audio';
     body={ messaging_product:'whatsapp', to, type, [type]:{ id, filename: type==='document'?fileName:undefined, caption: text||undefined } };
-    // WhatsApp no deja caption en document con filename + caption en algunas versiones, por eso mandamos texto aparte si hay
     if(text && type==='document'){
       await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method:'POST', headers:{ Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type':'application/json' }, body:JSON.stringify({ messaging_product:'whatsapp', to, type:'text', text:{body:text} }) });
       body[type].caption=undefined;
@@ -39,6 +38,32 @@ async function sendWhatsApp(to, text, file, fileName, fileType){
   }
   const r=await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method:'POST', headers:{ Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type':'application/json' }, body:JSON.stringify(body) });
   const j=await r.json(); if(j.error) throw new Error(JSON.stringify(j.error));
+}
+
+// 3. ⭐ NUEVO: Enviar plantilla csi_caribe_info
+async function sendTemplateMessage(to, nombre){
+  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.PHONE_NUMBER_ID;
+  const body = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: 'csi_caribe_info',
+      language: { code: 'es' },
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', parameter_name: 'nombre', text: nombre || 'amigo' }
+          ]
+        }
+      ]
+    }
+  };
+  const r = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, { method:'POST', headers:{ Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if(j.error) throw new Error(JSON.stringify(j.error));
+  return j;
 }
 
 module.exports = async function handler(req,res){
@@ -56,8 +81,21 @@ module.exports = async function handler(req,res){
       const out=[]; for(const p of phones){ const c=await kv.hgetall(`contact:${p}`); if(c&&c.phone) out.push(c); } return res.json(out);
     }
     if(req.method==='POST'){
-      const {phone,text,post_url,replyText,file,fileName,fileType}=req.body||{};
+      const {phone,text,post_url,replyText,file,fileName,fileType,template,name} = req.body||{};
       if(!phone) return res.status(400).json({error:'phone required'});
+
+      // ⭐ Si viene del masivo con template:true, manda plantilla
+      if(template){
+        const nombre = name || text || 'amigo';
+        try{ await sendTemplateMessage(phone, nombre); }catch(e){ console.error('Template fail',e); return res.status(500).json({error:String(e)}); }
+        const templateText = `📩 Plantilla csi_caribe_info enviada a ${nombre} - Módulo II 07-Diciembre [Ver Brochure Completo]`;
+        const contact = await kv.hgetall(`contact:${phone}`)||{};
+        await kv.rpush(`chat:${phone}`, JSON.stringify({from:phone,name:contact.name||nombre||phone,text:templateText,dir:'out',time:Date.now(),post_url:post_url||''}));
+        await kv.zadd('chats',{score:Date.now(),member:phone});
+        await kv.hset(`contact:${phone}`,{phone,name:contact.name||nombre||phone,lastMessage:templateText,lastTime:String(Date.now()),post_url:post_url||contact.post_url||''});
+        return res.json({ok:true, template:true});
+      }
+
       let finalText=text||''; if(replyText) finalText=`↩️ Respondiendo a: "${replyText}"\n${finalText}`;
       try{ await sendWhatsApp(phone, finalText, file, fileName, fileType); }catch(e){ console.error('Send fail',e); return res.status(500).json({error:String(e)}); }
       const contact=await kv.hgetall(`contact:${phone}`)||{};
