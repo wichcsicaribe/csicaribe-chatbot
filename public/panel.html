@@ -116,20 +116,61 @@ async function sendTemplateCurrent(){
   if(j.error){ alert('Error: '+j.error); return; }
   openChat(current);
 }
-async function readExcel(e){ const f=e.target.files[0]; const data=await f.arrayBuffer(); const wb=XLSX.read(data); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws); bulkList=rows.map(r=>({phone:String(r.phone||r.telefono||r.numero||r.celular||Object.values(r)[0]||'').replace(/\D/g,''), name:r.nombre||r.name||r.Nombre||'', post_url:r.post_url||r.link||r.post||''})); document.getElementById('bulkBox').style.display='block'; document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos.'; }
+async function readExcel(e){
+  const f=e.target.files[0]; 
+  const data=await f.arrayBuffer(); 
+  const wb=XLSX.read(data); 
+  const ws=wb.Sheets[wb.SheetNames[0]]; 
+  const rows=XLSX.utils.sheet_to_json(ws);
+  
+  bulkList = rows.map(r=>{
+    let nombre = '';
+    let phone = '';
+    for(let k in r){
+      const key = k.toLowerCase().trim();
+      const val = String(r[k]||'').trim();
+      if(!val) continue;
+      if(key.includes('nom') || key.includes('name') || key.includes('cliente') || key.includes('contacto')) nombre = val;
+      if(key.includes('phone') || key.includes('tel') || key.includes('cel') || key.includes('numero') || key.includes('número') || key.includes('whatsapp')) phone = val.replace(/\D/g,'');
+    }
+    if(!nombre){
+      const vals = Object.values(r);
+      if(vals[1]) nombre = String(vals[1]).trim();
+    }
+    if(!phone){
+      const vals = Object.values(r);
+      if(vals[0]) phone = String(vals[0]).replace(/\D/g,'');
+    }
+    if(phone.length===9) phone = '51'+phone;
+    return { phone, name: nombre || '' };
+  }).filter(c=>c.phone.length>=9);
+
+  document.getElementById('bulkBox').style.display='block';
+  document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos.<br>'+bulkList.map(c=>c.phone+' - '+(c.name||'⚠️ SIN NOMBRE')).join('<br>');
+}
+
 async function sendBulk(){
   if(!bulkList.length) return alert('Sube Excel primero');
+  let ok=0, fail=[];
   for(let i=0;i<bulkList.length;i++){
     const c=bulkList[i];
-    document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+c.name;
-    await fetch('/api/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ phone:c.phone, name:c.name || 'amigo', template:true })
-    });
+    document.getElementById('bulkStatus').innerText='Enviando '+(i+1)+'/'+bulkList.length+' a '+(c.name||c.phone);
+    try{
+      const r = await fetch('/api/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ phone:c.phone, name:c.name || 'amigo', template:true })
+      });
+      const j = await r.json();
+      if(j.error) throw new Error(j.error);
+      ok++;
+    }catch(err){
+      fail.push(c.phone+' - '+(c.name||'')+' → '+err.message);
+      console.log('Falló',c,err);
+    }
     await new Promise(r=>setTimeout(r,2000));
   }
-  document.getElementById('bulkStatus').innerText='✅ Listo!';
+  document.getElementById('bulkStatus').innerHTML='✅ Enviados: '+ok+'<br>'+(fail.length? '❌ Fallaron:<br>'+fail.join('<br>') : '');
   loadChats();
 }
 loadChats();
