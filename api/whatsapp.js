@@ -35,37 +35,43 @@ Escriba el número:
 
 Quedo atento para ayudarle. 🤝`;
 
+function normalizar(t){
+  return (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s]/g,' ').trim();
+}
+
 function getReplyByReferral(post_url, post_title, text){
-  const title = (post_title||'').toLowerCase();
-  const msg = (text||'').toLowerCase().trim();
+  const title = normalizar(post_title);
+  const msg = normalizar(text);
   const hasReferral = !!(post_url && post_url.trim() !== '');
 
-  // 0. Si ya le mandamos el menú y responde 1, 2, 3
-  if(msg === '1' || msg === '1️⃣' || msg === '1.' || msg.includes('opcion 1') || msg.includes('opción 1')) return MODULO_I_REPLY;
-  if(msg === '2' || msg === '2️⃣' || msg === '2.' || msg.includes('opcion 2') || msg.includes('opción 2')) return MODULO_II_REPLY;
-  if(msg === '3' || msg === '3️⃣' || msg === '3.') return `¡Perfecto! ¿Me indica qué curso le interesa? Así le comparto el brochure correcto. 🤝`;
+  // ⭐ NUEVO 0. NO RESPONDER - gracias, ok, listo, etc.
+  // Si solo dice eso, no mandamos NADA. Si además pide info, sí le mandamos menú abajo.
+  const NO_RESPONDER = ['gracias','ok','listo','entendido','perfecto','de acuerdo','genial','bien','vale'];
+  const PEDIR_INFO = ['info','brochure','curso','precio','temario','quiero','modulo','inscribir','inscribirme','costo','cuanto','horario','fecha','inicio','cupo','vacante','dinamica','estructural','grados'];
+  const pideInfo = PEDIR_INFO.some(p => msg.includes(p));
+  const soloAgradecimiento = NO_RESPONDER.some(p => msg.includes(p)) && !pideInfo;
+  if (soloAgradecimiento) return null;
 
-  // 1. Si escribe Módulo I explícito, respeta eso (aunque ahorita solo vendes II, por si alguien pregunta por I)
-  if(title.includes('módulo i') || title.includes('modulo i') || msg.includes('módulo i') || msg.includes('modulo i')) return MODULO_I_REPLY;
+  // 1. Si ya le mandamos el menú y responde 1, 2, 3
+  if(msg === '1' || msg.includes('opcion 1')) return MODULO_I_REPLY;
+  if(msg === '2' || msg.includes('opcion 2')) return MODULO_II_REPLY;
+  if(msg === '3' || msg.includes('opcion 3')) return `¡Perfecto! ¿Me indica qué curso le interesa? Así le comparto el brochure correcto. 🤝`;
 
-  // 2. ⭐ SI VIENE DE REFERRAL (de CUALQUIER anuncio) -> ES MÓDULO II DIRECTO
-  // Como ahorita solo vendes Módulo II, no le preguntes, mándale el brochure de una vez
-  // Ya no importa si el link fb.me/XXXX cambia cada vez
+  // 2. Si escribe Módulo I explícito
+  if(title.includes('modulo i') || msg.includes('modulo i')) return MODULO_I_REPLY;
+
+  // 3. SI VIENE DE REFERRAL (de CUALQUIER anuncio) -> ES MÓDULO II DIRECTO
   if(hasReferral) return MODULO_II_REPLY;
 
-  // 3. ⭐ SI PREGUNTA POR DINÁMICA ESTRUCTURAL -> ES MÓDULO II DIRECTO
-  // Ej: "Quiero info de dinámica", "curso de dinámica estructural", "módulo II", "n grados", "grados de libertad"
-  if(msg.includes('dinamica') || msg.includes('dinámica') || msg.includes('estructural') || msg.includes('módulo ii') || msg.includes('modulo ii') || msg.includes('módulo 2') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad')) return MODULO_II_REPLY;
+  // 4. SI PREGUNTA POR DINÁMICA ESTRUCTURAL -> ES MÓDULO II DIRECTO
+  if(msg.includes('dinamica') || msg.includes('estructural') || msg.includes('modulo ii') || msg.includes('modulo 2') || msg.includes('n grados') || msg.includes('grados de libertad')) return MODULO_II_REPLY;
+  if(title.includes('dinamica') || title.includes('modulo ii') || title.includes('n grados')) return MODULO_II_REPLY;
 
-  // También si el título del anuncio dice dinámica / módulo II
-  if(title.includes('dinamica') || title.includes('dinámica') || title.includes('módulo ii') || title.includes('modulo ii') || title.includes('n grados')) return MODULO_II_REPLY;
+  // 5. ⭐ SOLO SI PIDE INFO -> MENÚ DE 3 OPCIONES
+  // Ya NO entra por "hola", "buenas", ni por mensajes cortos
+  if(pideInfo) return GENERIC_REPLY;
 
-  // 4. ⭐ SOLO SI ES PREGUNTA GENÉRICA -> MENÚ DE 3 OPCIONES
-  // Ej: "Hola", "Info", "Quiero info", "Cuánto cuesta", "Buenas", "Precio"
-  // Aquí SÍ no sabemos qué curso quiere, así que le preguntamos
-  if(msg === 'hola' || msg === 'info' || msg === 'informacion' || msg === 'información' || msg === 'cursos ofrecen' || msg === 'cursos tienen' || msg.includes('quiero info') || msg.includes('cursos') || msg.includes('cursos del mes') || msg.includes('quiero información') || msg.includes('quiero mas info') || msg.includes('quiero más info') || msg.includes('buenas') || msg.includes('cuanto cuesta') || msg.includes('cuánto cuesta') || msg.includes('precio') || msg.includes('costo') || msg === 'hola, quiero info' || msg.length < 15) return GENERIC_REPLY;
-
-  // 5. Si no es nada de eso, no responde automático, lo respondes tú
+  // 6. Si no es nada de eso, no responde automático, lo respondes tú
   return null;
 }
 // ===
@@ -120,17 +126,13 @@ module.exports = async function handler(req, res) {
         const existing = await kv.hgetall(`contact:${phone}`) || {};
         await kv.hset(`contact:${phone}`, { phone, name: name || existing.name || phone, lastMessage: text, lastTime: String(Date.now()), post_url: post_url || existing.post_url || '', post_title: post_title || existing.post_title || '' });
 
-        // Guardar mensaje entrante en Google Sheet
         await logToSheet({ date: new Date().toLocaleString('es-PE'), name, from: phone, text, dir: 'in', fileName, post_url: post_url||'', post_title: post_title||'' });
 
-        // === RESPUESTA AUTOMÁTICA POR REFERRAL ===
+        // === RESPUESTA AUTOMÁTICA ===
         const autoReply = getReplyByReferral(post_url, post_title, text);
         if(autoReply){
-          // 1. Guardar respuesta del bot en el panel para que la veas
           await kv.rpush(`chat:${phone}`, JSON.stringify({ from: phone, name: 'CSI CARIBE+ (Bot)', text: autoReply, dir: 'out', time: Date.now(), post_url: '', post_title: '', file: '', fileName: '', fileType: '' }));
-          // 2. Mandar respuesta por WhatsApp al cliente
           await sendWhatsApp(phone, autoReply).catch(e => console.log('No se pudo mandar auto-reply', e));
-          // 3. Guardar respuesta del bot en Google Sheet
           await logToSheet({ date: new Date().toLocaleString('es-PE'), name: 'CSI CARIBE+ (Bot)', from: phone, text: autoReply, dir: 'out', fileName: '', post_url: post_url||'', post_title: post_title||'' });
         }
 
