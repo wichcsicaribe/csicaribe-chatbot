@@ -1,0 +1,12 @@
+{
+  "name": "Panel CSI CARIBE+",
+  "short_name": "CSI CARIBE+",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#25D366",
+  "icons": [
+    { "src": "https://cdn-icons-png.flaticon.com/512/733/733585.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://cdn-icons-png.flaticon.com/512/733/733585.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
