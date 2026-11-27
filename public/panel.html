@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Panel CSI CARIBE+</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#25D366">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/733/733585.png">
 <style>
 body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 #list{width:340px;border-right:1px solid #ddd;overflow:auto;flex-shrink:0}
@@ -16,6 +22,7 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 #backBtn{display:none}#replyBar{display:none;background:#fff3cd;padding:8px 12px;font-size:13px;border-top:1px solid #eee}
 #notifBtn{width:100%;padding:10px;background:#000;border:0;border-radius:8px;color:#fff;cursor:pointer;font-size:14px;margin:10px 0 0}
 #notifBtn.on{background:#25D366}
+#installBtn{width:100%;padding:10px;background:#25D366;border:0;border-radius:8px;color:#fff;cursor:pointer;font-size:14px;margin:5px 0;display:none}
 @media(max-width:768px){
   body{flex-direction:column}#list{width:100%;border-right:0}#chat{display:none;width:100%}
   body.chat-open #list{display:none}body.chat-open #chat{display:flex}
@@ -42,6 +49,7 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 <div id="bulkStatus" style="font-size:12px;margin-top:6px"></div>
 </div></div>
 <button id="notifBtn" onclick="activarNotificaciones()">🔔 Activar Notificaciones</button>
+<button id="installBtn" onclick="instalarApp()">📲 Instalar App en este dispositivo</button>
 <input id="search" placeholder="Buscar..." oninput="loadChats()" style="margin:10px 12px;padding:10px;width:85%;font-size:15px"><div id="contacts">Cargando...</div></div>
 <div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px"><button id="backBtn" onclick="goBack()">← Atrás</button><div style="flex:1;min-width:0"><b id="curName">Selecciona un chat</b> <span id="curPhone"></span></div>
 <button onclick="sendTemplateCurrent()" title="Enviar plantilla csi_caribe_info" style="border:0;background:#ff9800;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-weight:bold">📩 Enviar Plantilla</button>
@@ -53,10 +61,10 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 <script>
 let current=null, allChats=[], bulkList=[], replyTo=null, replyTxt='', pendingFile=null, pendingFileName='', pendingFileType='', currentMsgs=[];
 
-// === ⭐ NUEVO: NOTIFICACIONES DESDE EL PANEL ===
+// === NOTIFICACIONES DESDE EL PANEL ===
 let notifActivas = false;
 let primerCargado = false;
-let ultimoVisto = {}; // phone -> lastTime
+let ultimoVisto = {};
 let titOriginal = document.title;
 
 async function activarNotificaciones(){
@@ -66,7 +74,6 @@ async function activarNotificaciones(){
     notifActivas = true;
     document.getElementById('notifBtn').innerText = '✅ Notificaciones Activas';
     document.getElementById('notifBtn').classList.add('on');
-    // Guardar el estado actual para no avisar de mensajes viejos
     allChats.forEach(c => { ultimoVisto[c.phone] = getTime(c); });
     primerCargado = true;
     new Notification('CSI CARIBE+ ✅', { body: 'Notificaciones activadas. Te avisaremos cuando llegue un mensaje nuevo.' });
@@ -74,24 +81,39 @@ async function activarNotificaciones(){
     alert('Tienes que darle Permitir a las notificaciones en tu navegador');
   }
 }
-
 function avisarNuevoMensaje(c){
   if (!notifActivas) return;
-  // No avisar si estás viendo ese mismo chat
   if (String(current) === String(c.phone) && document.body.classList.contains('chat-open')) return;
   const texto = safeStr(c.lastMessage).slice(0, 100);
-  // 1. Notificación del sistema (sale en PC y celular aunque estés en otra app)
   try {
     const n = new Notification('🔔 Nuevo mensaje CSI CARIBE+', { body: (c.name || c.phone) + ': ' + texto, tag: c.phone });
     n.onclick = () => { window.focus(); openChat(c.phone); };
   } catch(e){}
-  // 2. Sonido
   try { document.getElementById('notifSound').play().catch(()=>{}); } catch(e){}
-  // 3. Vibración en celular
   if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-  // 4. Título parpadeante
   document.title = '(1) Nuevo mensaje - CSI CARIBE+';
   setTimeout(()=>{ document.title = titOriginal; }, 5000);
+}
+
+// === PWA - INSTALAR COMO APP ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const b = document.getElementById('installBtn');
+  if(b) b.style.display = 'block';
+});
+async function instalarApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  } else {
+    alert('En Chrome dale a Menú (3 puntitos) > Instalar app / Agregar a pantalla principal. En iPhone, en Safari dale a Compartir > Agregar a pantalla de inicio.');
+  }
 }
 
 function safeStr(v){
@@ -113,7 +135,6 @@ function goBack(){ current=null; replyTo=null; cancelReply(); document.body.clas
 async function loadChats(){
   try{
     const r=await fetch('/api/messages'); allChats=await r.json();
-    // ⭐ Detectar mensajes nuevos para notificar
     if (primerCargado && notifActivas) {
       allChats.forEach(c => {
         const t = getTime(c);
@@ -225,5 +246,10 @@ async function sendBulk(){
   loadChats();
 }
 loadChats();
-setInterval(()=>{ if(document.body.classList.contains('chat-open') && current){ openChat(current); } else { loadChats(); } }, 5000);
+setInterval(async () => {
+  await loadChats();
+  if(document.body.classList.contains('chat-open') && current){
+    openChat(current);
+  }
+}, 5000);
 </script></body></html>
