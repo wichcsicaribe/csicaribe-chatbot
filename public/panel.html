@@ -14,6 +14,8 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 .contact b{display:block}.time{font-size:11px;color:#888;margin-top:4px}
 .datesep{text-align:center;margin:14px 0 6px}.datesep span{background:#eef2f7;padding:4px 12px;border-radius:12px;font-size:12px;color:#555}
 #backBtn{display:none}#replyBar{display:none;background:#fff3cd;padding:8px 12px;font-size:13px;border-top:1px solid #eee}
+#notifBtn{width:100%;padding:10px;background:#000;border:0;border-radius:8px;color:#fff;cursor:pointer;font-size:14px;margin:10px 0 0}
+#notifBtn.on{background:#25D366}
 @media(max-width:768px){
   body{flex-direction:column}#list{width:100%;border-right:0}#chat{display:none;width:100%}
   body.chat-open #list{display:none}body.chat-open #chat{display:flex}
@@ -28,7 +30,6 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 <button onclick="document.getElementById('excelFile').click()" style="width:100%;padding:12px;background:#25D366;border:0;border-radius:8px;color:#fff;cursor:pointer;font-size:15px">📊 Enviar Masivo con Excel</button>
 <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="readExcel(event)">
 <div id="bulkBox" style="display:none;margin-top:10px">
-<!-- ⭐ CAMBIO 1: Ya no pide escribir cuerpo, la plantilla ya está en Meta -->
 <div style="background:#e8f5e9;border:1px solid #4caf50;padding:10px;border-radius:8px;font-size:13px;line-height:1.4">
   ✅ <b>Plantilla activa:</b> csi_caribe_info<br>
   Se enviará: <i>"Hola {{nombre}}, te saludamos de CSI CARIBE+... 07-Diciembre..."</i><br>
@@ -40,16 +41,58 @@ body{margin:0;font-family:sans-serif;display:flex;height:100vh;height:100dvh}
 <button onclick="sendBulk()" style="width:100%;padding:12px;background:#000;color:#fff;border:0;border-radius:8px">Enviar a todos ▶</button>
 <div id="bulkStatus" style="font-size:12px;margin-top:6px"></div>
 </div></div>
+<button id="notifBtn" onclick="activarNotificaciones()">🔔 Activar Notificaciones</button>
 <input id="search" placeholder="Buscar..." oninput="loadChats()" style="margin:10px 12px;padding:10px;width:85%;font-size:15px"><div id="contacts">Cargando...</div></div>
 <div id="chat"><div id="header" style="padding:12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px"><button id="backBtn" onclick="goBack()">← Atrás</button><div style="flex:1;min-width:0"><b id="curName">Selecciona un chat</b> <span id="curPhone"></span></div>
-<!-- ⭐ CAMBIO 2: Botón para mandar plantilla a este chat cuando ya pasaron 24h -->
 <button onclick="sendTemplateCurrent()" title="Enviar plantilla csi_caribe_info" style="border:0;background:#ff9800;padding:8px 10px;border-radius:8px;cursor:pointer;color:#fff;font-weight:bold">📩 Enviar Plantilla</button>
 <button onclick="deleteChat()" title="Eliminar chat" style="border:0;background:#fee;padding:8px 10px;border-radius:8px;cursor:pointer">🗑️</button></div>
 <div id="msgs"><p style="color:#888">Selecciona un chat</p></div>
 <div id="replyBar"><span id="replyText"></span> <button onclick="cancelReply()" style="border:0;background:none;cursor:pointer">✕</button></div>
 <div style="display:flex;padding:12px;gap:8px;align-items:center"><label style="cursor:pointer;font-size:22px">📎<input type="file" id="fileInput" style="display:none" onchange="attachFile(event)"></label><span id="fileName" style="font-size:12px;max-width:80px;overflow:hidden"></span><input id="input" style="flex:1;padding:12px;font-size:16px" placeholder="Escribe tu respuesta... (solo funciona si te escribió en las últimas 24h)"><button onclick="send()" style="padding:12px 18px;background:#25D366;border:0;border-radius:8px;color:#fff;font-size:15px">Enviar</button></div></div>
+<audio id="notifSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 <script>
 let current=null, allChats=[], bulkList=[], replyTo=null, replyTxt='', pendingFile=null, pendingFileName='', pendingFileType='', currentMsgs=[];
+
+// === ⭐ NUEVO: NOTIFICACIONES DESDE EL PANEL ===
+let notifActivas = false;
+let primerCargado = false;
+let ultimoVisto = {}; // phone -> lastTime
+let titOriginal = document.title;
+
+async function activarNotificaciones(){
+  if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    notifActivas = true;
+    document.getElementById('notifBtn').innerText = '✅ Notificaciones Activas';
+    document.getElementById('notifBtn').classList.add('on');
+    // Guardar el estado actual para no avisar de mensajes viejos
+    allChats.forEach(c => { ultimoVisto[c.phone] = getTime(c); });
+    primerCargado = true;
+    new Notification('CSI CARIBE+ ✅', { body: 'Notificaciones activadas. Te avisaremos cuando llegue un mensaje nuevo.' });
+  } else {
+    alert('Tienes que darle Permitir a las notificaciones en tu navegador');
+  }
+}
+
+function avisarNuevoMensaje(c){
+  if (!notifActivas) return;
+  // No avisar si estás viendo ese mismo chat
+  if (String(current) === String(c.phone) && document.body.classList.contains('chat-open')) return;
+  const texto = safeStr(c.lastMessage).slice(0, 100);
+  // 1. Notificación del sistema (sale en PC y celular aunque estés en otra app)
+  try {
+    const n = new Notification('🔔 Nuevo mensaje CSI CARIBE+', { body: (c.name || c.phone) + ': ' + texto, tag: c.phone });
+    n.onclick = () => { window.focus(); openChat(c.phone); };
+  } catch(e){}
+  // 2. Sonido
+  try { document.getElementById('notifSound').play().catch(()=>{}); } catch(e){}
+  // 3. Vibración en celular
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  // 4. Título parpadeante
+  document.title = '(1) Nuevo mensaje - CSI CARIBE+';
+  setTimeout(()=>{ document.title = titOriginal; }, 5000);
+}
 
 function safeStr(v){
   if(v==null) return '';
@@ -70,6 +113,19 @@ function goBack(){ current=null; replyTo=null; cancelReply(); document.body.clas
 async function loadChats(){
   try{
     const r=await fetch('/api/messages'); allChats=await r.json();
+    // ⭐ Detectar mensajes nuevos para notificar
+    if (primerCargado && notifActivas) {
+      allChats.forEach(c => {
+        const t = getTime(c);
+        if (ultimoVisto[c.phone] && t && new Date(t) > new Date(ultimoVisto[c.phone])) {
+          avisarNuevoMensaje(c);
+        }
+        ultimoVisto[c.phone] = t;
+      });
+    } else {
+      allChats.forEach(c => { ultimoVisto[c.phone] = getTime(c); });
+      primerCargado = true;
+    }
     const q=(document.getElementById('search').value||'').toLowerCase();
     const chats=allChats.filter(c=>((c.name||'')+' '+(c.phone||'')).toLowerCase().includes(q));
     document.getElementById('contacts').innerHTML=chats.map(c=>`<div class="contact" onclick="openChat('${c.phone}')"><div><b>${c.name||c.phone||'Sin nombre'}</b><span>${c.phone||''}</span><br><small>${safeStr(c.lastMessage).slice(0,60)}</small><br><small style="color:#888">${fmtTime(getTime(c))}</small></div><button onclick="event.stopPropagation();deleteChat('${c.phone}')" style="border:0;background:#fee;padding:8px;border-radius:8px;cursor:pointer">🗑️</button></div>`).join('') || '<p style="padding:12px;color:#888">Sin chats</p>';
@@ -100,12 +156,10 @@ async function deleteMsg(i){ if(!confirm('¿Eliminar este mensaje?')) return; aw
 async function deleteChat(phone){ phone=phone||current; if(!phone) return; if(!confirm('¿Eliminar todo el chat de '+phone+'?')) return; await fetch('/api/messages?phone='+phone,{method:'DELETE'}); if(phone===current) goBack(); else loadChats(); }
 function attachFile(e){ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ pendingFile=rd.result; pendingFileName=f.name; pendingFileType=f.type; document.getElementById('fileName').innerText=f.name; }; rd.readAsDataURL(f); }
 async function send(){
-  // ⭐ Texto libre: solo si te escribió en las últimas 24h
   const text=document.getElementById('input').value; if(!text && !pendingFile) return; if(!current) return;
   await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:current,text,replyTo,replyText:replyTxt,file:pendingFile,fileName:pendingFileName,fileType:pendingFileType})});
   document.getElementById('input').value=''; document.getElementById('fileName').innerText=''; pendingFile=null; cancelReply(); openChat(current);
 }
-// ⭐ NUEVO: Mandar plantilla a este chat (cuando ya pasaron 24h)
 async function sendTemplateCurrent(){
   if(!current) return alert('Selecciona un chat primero');
   const c = allChats.find(x=>String(x.phone)==String(current));
@@ -122,7 +176,6 @@ async function readExcel(e){
   const wb=XLSX.read(data); 
   const ws=wb.Sheets[wb.SheetNames[0]]; 
   const rows=XLSX.utils.sheet_to_json(ws);
-  
   bulkList = rows.map(r=>{
     let nombre = '';
     let phone = '';
@@ -144,11 +197,9 @@ async function readExcel(e){
     if(phone.length===9) phone = '51'+phone;
     return { phone, name: nombre || '' };
   }).filter(c=>c.phone.length>=9);
-
   document.getElementById('bulkBox').style.display='block';
   document.getElementById('bulkPreview').innerHTML='Encontré <b>'+bulkList.length+'</b> contactos.<br>'+bulkList.map(c=>c.phone+' - '+(c.name||'⚠️ SIN NOMBRE')).join('<br>');
 }
-
 async function sendBulk(){
   if(!bulkList.length) return alert('Sube Excel primero');
   let ok=0, fail=[];
