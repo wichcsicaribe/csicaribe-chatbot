@@ -1,7 +1,8 @@
 {
   "name": "Panel CSI CARIBE+",
   "short_name": "CSI CARIBE+",
-  "start_url": "/",
+  "start_url": "/panel.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#25D366",
